@@ -1,5 +1,6 @@
 import forge from 'node-forge';
-import { readPdfSignatures } from 'pdf-signature-reader';
+import pdfSignatureReader from 'pdf-signature-reader';
+const { readPdfSignatures } = pdfSignatureReader;
 
 /**
  * Advanced PDF Digital Signature Verification Service

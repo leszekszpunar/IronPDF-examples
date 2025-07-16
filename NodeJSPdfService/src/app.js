@@ -2,7 +2,7 @@ import express from 'express';
 import swaggerUi from 'swagger-ui-express';
 import swaggerDefinition from '../swagger-definition.js';
 import { config } from './config/app.config.js';
-import { securityMiddleware } from './middleware/security.middleware.js';
+import SecurityMiddleware from './middleware/security.middleware.js';
 import barcodeRoutes from './routes/barcode.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import pdfRoutes from './routes/pdf.routes.js';
@@ -42,11 +42,11 @@ class PdfServiceApplication {
    */
   setupMiddleware() {
     // Security middleware (CORS, Helmet, Rate limiting, etc.)
-    this.app.use(securityMiddleware.cors);
-    this.app.use(securityMiddleware.helmet);
-    this.app.use(securityMiddleware.compression);
-    this.app.use(securityMiddleware.rateLimiter);
-    this.app.use(securityMiddleware.speedLimiter);
+    this.app.use(SecurityMiddleware.cors());
+    this.app.use(SecurityMiddleware.helmet());
+    this.app.use(SecurityMiddleware.compression());
+    this.app.use(SecurityMiddleware.rateLimit());
+    this.app.use(SecurityMiddleware.speedLimit());
 
     // Body parsing middleware
     this.app.use(express.json({ limit: config.upload.maxFileSize }));

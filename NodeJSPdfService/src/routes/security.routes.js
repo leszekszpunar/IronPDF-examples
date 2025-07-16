@@ -1,18 +1,25 @@
 import { Router } from 'express';
 import SecurityController from '../controllers/security.controller.js';
 import { streamingMiddleware } from '../middleware/streaming.middleware.js';
-import TelemetryMiddleware from '../middleware/telemetry.middleware.js';
 import {
-  validateBase64Pdf,
-  validateCertificate,
-  validateCompliance,
-  validatePassword,
-  validatePdfFile,
-  validateSecurityOptions
+    validateBase64Pdf,
+    validateCertificate,
+    validateCompliance,
+    validatePassword,
+    validatePdfFile,
+    validateSecurityOptions
 } from '../validators/index.js';
 
 const router = Router();
 const securityController = new SecurityController();
+
+// Simple middleware for telemetry tracking (placeholder for enterprise telemetry)
+const telemetryMiddleware = (operationType = 'security') => (req, res, next) => {
+  req.operationStart = Date.now();
+  req.operationType = operationType;
+  console.log(`[TELEMETRY] Starting ${operationType} operation - ${req.method} ${req.path}`);
+  next();
+};
 
 /**
  * @swagger
@@ -113,7 +120,7 @@ const securityController = new SecurityController();
  */
 router.post('/verify-signatures',
   streamingMiddleware.uploadSingle,
-  TelemetryMiddleware.securityOperationTracing(),
+  telemetryMiddleware('signature_verification'),
   [validatePdfFile, validateBase64Pdf],
   securityController.verifySignatures.bind(securityController)
 );
@@ -175,7 +182,7 @@ router.post('/verify-signatures',
  */
 router.post('/analyze',
   streamingMiddleware.uploadSingle,
-  TelemetryMiddleware.securityOperationTracing(),
+  telemetryMiddleware('security_analysis'),
   [validatePdfFile, validateBase64Pdf, validateSecurityOptions],
   securityController.analyzeSecurityFeatures.bind(securityController)
 );
@@ -238,7 +245,7 @@ router.post('/analyze',
  */
 router.post('/test-password',
   streamingMiddleware.uploadSingle,
-  TelemetryMiddleware.pdfOperationTracing('password_test'),
+  telemetryMiddleware('password_test'),
   [validatePdfFile, validateBase64Pdf, validatePassword],
   securityController.testPassword.bind(securityController)
 );
@@ -310,7 +317,7 @@ router.post('/test-password',
  */
 router.post('/report',
   streamingMiddleware.uploadSingle,
-  TelemetryMiddleware.securityOperationTracing(),
+  telemetryMiddleware('security_report'),
   [validatePdfFile, validateBase64Pdf, validateCompliance],
   securityController.generateSecurityReport.bind(securityController)
 );
@@ -366,7 +373,7 @@ router.post('/report',
  */
 router.post('/batch-verify',
   streamingMiddleware.uploadMultiple,
-  TelemetryMiddleware.batchOperationTracing(),
+  telemetryMiddleware('batch_verification'),
   securityController.batchVerifyDocuments.bind(securityController)
 );
 
@@ -439,13 +446,13 @@ router.post('/batch-verify',
  *         description: Server error
  */
 router.get('/trusted-ca',
-  TelemetryMiddleware.requestTracing(),
+  telemetryMiddleware('ca_list'),
   securityController.listTrustedCAs.bind(securityController)
 );
 
 router.post('/trusted-ca',
   streamingMiddleware.uploadSingle,
-  TelemetryMiddleware.pdfOperationTracing('ca_management'),
+  telemetryMiddleware('ca_management'),
   [validateCertificate],
   securityController.addTrustedCA.bind(securityController)
 );
@@ -482,7 +489,7 @@ router.post('/trusted-ca',
  *         description: Server error
  */
 router.delete('/trusted-ca/:fingerprint',
-  TelemetryMiddleware.pdfOperationTracing('ca_management'),
+  telemetryMiddleware('ca_management'),
   securityController.removeTrustedCA.bind(securityController)
 );
 
@@ -548,7 +555,7 @@ router.delete('/trusted-ca/:fingerprint',
  */
 router.post('/certificates',
   streamingMiddleware.uploadSingle,
-  TelemetryMiddleware.pdfOperationTracing('certificate_extraction'),
+  telemetryMiddleware('certificate_extraction'),
   [validatePdfFile, validateBase64Pdf],
   securityController.getCertificateDetails.bind(securityController)
 );

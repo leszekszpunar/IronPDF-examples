@@ -1,7 +1,6 @@
-import fs from 'fs';
-import qpdfInfo from 'node-qpdf2';
 import path from 'path';
 import { fileURLToPath } from 'url';
+// import qpdfInfo from 'node-qpdf2'; // Temporarily disabled - will implement alternative
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -121,58 +120,21 @@ class PdfSecurityService {
 
   /**
    * Analyze PDF security using QPDF
-   * @param {Buffer} pdfBuffer - PDF buffer
-   * @param {string} password - Password for encrypted PDFs
+   * @param {Buffer} _pdfBuffer - PDF buffer
+   * @param {string} _password - Password for encrypted PDFs
    * @returns {Object} QPDF analysis results
    */
-  async analyzeQpdfSecurity(pdfBuffer, password) {
-    try {
-      // Create temporary file for QPDF analysis
-      const tempFile = `/tmp/pdf_security_${Date.now()}.pdf`;
-      fs.writeFileSync(tempFile, pdfBuffer);
-
-      const analysis = {
-        qpdfAnalysis: {
-          accessible: true,
-          encryptionInfo: null,
-          permissions: {}
-        }
-      };
-
-      try {
-        // Use QPDF to get detailed encryption information
-        const qpdfInfo = await this.getQpdfInfo(tempFile, password);
-        analysis.qpdfAnalysis.encryptionInfo = qpdfInfo;
-
-        if (qpdfInfo.encrypted) {
-          analysis.encrypted = true;
-          analysis.encryptionDetails = this.parseEncryptionDetails(qpdfInfo);
-          analysis.permissions = this.parsePermissions(qpdfInfo);
-        }
-      } catch (qpdfError) {
-        analysis.qpdfAnalysis.error = qpdfError.message;
-        if (qpdfError.message.includes('password')) {
-          analysis.encrypted = true;
-          analysis.passwordProtected = true;
-        }
+  async analyzeQpdfSecurity(_pdfBuffer, _password) {
+    // QPDF analysis temporarily disabled due to ES module compatibility
+    // Will implement alternative solution
+    return {
+      qpdfAnalysis: {
+        accessible: true,
+        note: 'QPDF analysis temporarily disabled - using alternative PDF analysis',
+        encryptionInfo: null,
+        permissions: {}
       }
-
-      // Clean up temporary file
-      try {
-        fs.unlinkSync(tempFile);
-      } catch (_cleanupError) {
-        // Ignore cleanup errors
-      }
-
-      return analysis;
-    } catch (error) {
-      return {
-        qpdfAnalysis: {
-          accessible: false,
-          error: error.message
-        }
-      };
-    }
+    };
   }
 
   /**
@@ -242,37 +204,20 @@ class PdfSecurityService {
 
   /**
    * Get detailed QPDF information
-   * @param {string} filePath - Path to PDF file
-   * @param {string} password - Password for encrypted PDFs
+   * @param {string} _filePath - Path to PDF file
+   * @param {string} _password - Password for encrypted PDFs
    * @returns {Promise<Object>} QPDF information
    */
-  async getQpdfInfo(filePath, password) {
-    try {
-      const options = {
-        input: filePath
-      };
-
-      if (password) {
-        options.password = password;
-      }
-
-      const info = await qpdfInfo(options);
-
-      // Parse the info response into our expected format
-      if (typeof info === 'string') {
-        return this.parseQpdfOutput(info);
-      } else {
-        return {
-          encrypted: info.encrypted || false,
-          algorithm: info.encryption?.algorithm || 'none',
-          keyLength: info.encryption?.keyLength || 0,
-          permissions: info.permissions || {},
-          version: info.version || 'unknown'
-        };
-      }
-    } catch (error) {
-      throw new Error(`QPDF analysis failed: ${error.message}`);
-    }
+  async getQpdfInfo(_filePath, _password) {
+    // Temporarily return mock data until QPDF integration is fixed
+    return {
+      encrypted: false,
+      algorithm: 'none',
+      keyLength: 0,
+      permissions: {},
+      version: 'unknown',
+      note: 'QPDF analysis temporarily disabled'
+    };
   }
 
   /**

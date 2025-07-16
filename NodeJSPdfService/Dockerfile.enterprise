@@ -1,0 +1,124 @@
+# Enterprise-grade Multi-stage Dockerfile for Production
+# Optimized for security, performance, and scalability
+
+# Stage 1: Build dependencies
+FROM node:20-alpine AS dependencies
+LABEL stage=dependencies
+
+# Security: Add non-root user
+RUN addgroup -g 1001 -S nodejs && \
+  adduser -S pdfservice -u 1001 -G nodejs
+
+# Install security updates
+RUN apk update && apk upgrade && \
+  apk add --no-cache \
+  dumb-init \
+  tini \
+  su-exec \
+  && rm -rf /var/cache/apk/*
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install production dependencies only
+RUN npm ci --only=production --no-audit && \
+  npm cache clean --force
+
+# Stage 2: Build application
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Copy source code
+COPY . .
+COPY --from=dependencies /app/node_modules ./node_modules
+
+# Run linting and tests
+RUN npm run lint && npm test
+
+# Stage 3: Production runtime
+FROM node:20-alpine AS production
+
+# Security labels and metadata
+LABEL maintainer="PDF Service Team" \
+  version="2.0.0" \
+  description="Enterprise PDF Service" \
+  security.scan="required" \
+  security.non-root="true"
+
+# Install security updates and minimal runtime dependencies
+RUN apk update && apk upgrade && \
+  apk add --no-cache \
+  dumb-init \
+  tini \
+  su-exec \
+  curl \
+  && rm -rf /var/cache/apk/* \
+  && rm -rf /tmp/*
+
+# Security: Create non-root user with minimal privileges
+RUN addgroup -g 1001 -S nodejs && \
+  adduser -S pdfservice -u 1001 -G nodejs
+
+# Create secure application directories
+WORKDIR /app
+
+# Set secure directory permissions
+RUN mkdir -p /app/temp /app/uploads /app/logs && \
+  chown -R pdfservice:nodejs /app && \
+  chmod 750 /app && \
+  chmod 700 /app/temp /app/uploads /app/logs
+
+# Copy production dependencies
+COPY --from=dependencies --chown=pdfservice:nodejs /app/node_modules ./node_modules
+
+# Copy application source
+COPY --from=builder --chown=pdfservice:nodejs /app/src ./src
+COPY --from=builder --chown=pdfservice:nodejs /app/package*.json ./
+COPY --from=builder --chown=pdfservice:nodejs /app/eslint.config.js ./
+
+# Security: Remove potential attack vectors
+RUN rm -rf /root/.npm /tmp/* /var/tmp/* && \
+  find /app -name "*.md" -delete && \
+  find /app -name "test*" -delete && \
+  find /app -name "*.test.js" -delete && \
+  find /app -name "*.spec.js" -delete
+
+# Security: Set file permissions
+RUN find /app -type f -exec chmod 644 {} \; && \
+  find /app -type d -exec chmod 755 {} \; && \
+  chmod 744 /app/src/app.js
+
+# Environment configuration
+ENV NODE_ENV=production \
+  NODE_OPTIONS="--max-old-space-size=2048 --enable-source-maps" \
+  PORT=3000 \
+  MAX_CONCURRENT=8 \
+  MAX_QUEUE_SIZE=200 \
+  OPERATION_TIMEOUT=60000 \
+  TEMP_CLEANUP_INTERVAL=300000
+
+# Security: Non-root user
+USER pdfservice
+
+# Health check with timeout
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Expose port (non-privileged)
+EXPOSE 3000
+
+# Security: Use tini as PID 1 for proper signal handling
+ENTRYPOINT ["tini", "--"]
+
+# Start application with proper signal handling
+CMD ["node", "src/app.js"]
+
+# Security hardening annotations for Kubernetes
+LABEL security.capabilities.drop="ALL" \
+  security.capabilities.add="NET_BIND_SERVICE" \
+  security.runAsNonRoot="true" \
+  security.runAsUser="1001" \
+  security.readOnlyRootFilesystem="true" \
+  security.allowPrivilegeEscalation="false" 

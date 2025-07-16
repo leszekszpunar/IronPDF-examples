@@ -1,0 +1,630 @@
+### Multi-Platform PDF Services - Kompletna Kolekcja Testów
+### Używa plików z katalogu Data/ do testowania wszystkich funkcjonalności
+
+### ========================================
+### HEALTH CHECKS
+### ========================================
+
+### Health Check - IronPDFService
+GET http://localhost:5001/health
+
+### Health Check - PdfSharpService
+GET http://localhost:5002/health
+
+### Health Check - PythonPdfService
+GET http://localhost:5003/health
+
+### Health Check - NodeJSPdfService
+GET http://localhost:5033/health
+
+### Health Check - GoPdfService
+GET http://localhost:5034/health
+
+### ========================================
+### SUPPORTED FORMATS
+### ========================================
+
+### Supported Formats - IronPDFService
+GET http://localhost:5001/api/pdf/supported-formats
+
+### Supported Formats - PdfSharpService
+GET http://localhost:5002/api/pdf/supported-formats
+
+### Supported Formats - PythonPdfService
+GET http://localhost:5003/api/pdf/supported-formats
+
+### Supported Formats - NodeJSPdfService
+GET http://localhost:5033/api/pdf/supported-formats
+
+### Supported Formats - GoPdfService
+GET http://localhost:5034/api/pdf/supported-formats
+
+### ========================================
+### PDF OPERATIONS - MERGE PDFS
+### ========================================
+
+### Merge PDFs - IronPDFService
+POST http://localhost:5001/api/pdf/merge-pdfs?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_500kB.doc"
+Content-Type: application/msword
+
+< ./Data/file-sample_500kB.doc
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Merge PDFs - PdfSharpService
+POST http://localhost:5002/api/pdf/merge-pdfs?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_500kB.doc"
+Content-Type: application/msword
+
+< ./Data/file-sample_500kB.doc
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Merge PDFs - PythonPdfService
+POST http://localhost:5003/api/pdf/merge-pdfs?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_500kB.doc"
+Content-Type: application/msword
+
+< ./Data/file-sample_500kB.doc
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Merge PDFs - NodeJSPdfService
+POST http://localhost:5033/api/pdf/merge-pdfs?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_500kB.doc"
+Content-Type: application/msword
+
+< ./Data/file-sample_500kB.doc
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Merge PDFs - GoPdfService
+POST http://localhost:5034/api/pdf/merge-pdfs?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_500kB.doc"
+Content-Type: application/msword
+
+< ./Data/file-sample_500kB.doc
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ========================================
+### PDF OPERATIONS - IMAGES TO PDF
+### ========================================
+
+### Images to PDF - IronPDFService
+POST http://localhost:5001/api/pdf/images-to-pdf?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-jamshed-ahmad-560590-1315655.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-jamshed-ahmad-560590-1315655.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-annpeach-15143046.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-annpeach-15143046.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Images to PDF - PdfSharpService
+POST http://localhost:5002/api/pdf/images-to-pdf?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-jamshed-ahmad-560590-1315655.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-jamshed-ahmad-560590-1315655.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-annpeach-15143046.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-annpeach-15143046.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Images to PDF - PythonPdfService
+POST http://localhost:5003/api/pdf/images-to-pdf?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-jamshed-ahmad-560590-1315655.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-jamshed-ahmad-560590-1315655.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-annpeach-15143046.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-annpeach-15143046.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Images to PDF - NodeJSPdfService
+POST http://localhost:5033/api/pdf/images-to-pdf?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-jamshed-ahmad-560590-1315655.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-jamshed-ahmad-560590-1315655.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-annpeach-15143046.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-annpeach-15143046.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Images to PDF - GoPdfService
+POST http://localhost:5034/api/pdf/images-to-pdf?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-jamshed-ahmad-560590-1315655.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-jamshed-ahmad-560590-1315655.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-annpeach-15143046.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-annpeach-15143046.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ========================================
+### PDF OPERATIONS - MERGE ALL
+### ========================================
+
+### Merge All - IronPDFService
+POST http://localhost:5001/api/pdf/merge-all?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-jamshed-ahmad-560590-1315655.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-jamshed-ahmad-560590-1315655.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Merge All - PdfSharpService
+POST http://localhost:5002/api/pdf/merge-all?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-jamshed-ahmad-560590-1315655.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-jamshed-ahmad-560590-1315655.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Merge All - PythonPdfService
+POST http://localhost:5003/api/pdf/merge-all?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-jamshed-ahmad-560590-1315655.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-jamshed-ahmad-560590-1315655.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Merge All - NodeJSPdfService
+POST http://localhost:5033/api/pdf/merge-all?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-jamshed-ahmad-560590-1315655.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-jamshed-ahmad-560590-1315655.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Merge All - GoPdfService
+POST http://localhost:5034/api/pdf/merge-all?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-jamshed-ahmad-560590-1315655.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-jamshed-ahmad-560590-1315655.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ========================================
+### DOCUMENT CONVERSION
+### ========================================
+
+### DOC to PDF - NodeJSPdfService
+POST http://localhost:5033/api/pdf/doc-to-pdf
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### DOC to PDF - GoPdfService
+POST http://localhost:5034/api/pdf/doc-to-pdf
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="file-sample_500kB.doc"
+Content-Type: application/msword
+
+< ./Data/file-sample_500kB.doc
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ========================================
+### BARCODES & QR CODES
+### ========================================
+
+### Add QR Code - NodeJSPdfService
+POST http://localhost:5033/api/pdf/add-qr-code
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="text"
+
+https://github.com/example/repo
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Add Barcode - NodeJSPdfService
+POST http://localhost:5033/api/pdf/add-barcode
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="text"
+
+987654321
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Add QR Code - GoPdfService
+POST http://localhost:5034/api/pdf/add-qr-code
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="file-sample_500kB.doc"
+Content-Type: application/msword
+
+< ./Data/file-sample_500kB.doc
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="text"
+
+https://example.com/test
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Add Barcode - GoPdfService
+POST http://localhost:5034/api/pdf/add-barcode
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="file-sample_500kB.doc"
+Content-Type: application/msword
+
+< ./Data/file-sample_500kB.doc
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="text"
+
+123456789
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ========================================
+### CODE READING (jeśli pliki testowe istnieją)
+### ========================================
+
+### Read Barcodes - NodeJSPdfService
+POST http://localhost:5033/api/pdf/read-barcodes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="barcode_test.png"
+Content-Type: image/png
+
+< ./test-files/barcode_test.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Read QR Codes - NodeJSPdfService
+POST http://localhost:5033/api/pdf/read-qr-codes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="qr_test.png"
+Content-Type: image/png
+
+< ./test-files/qr_test.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Read All Codes - NodeJSPdfService
+POST http://localhost:5033/api/pdf/read-all-codes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="mixed_codes.png"
+Content-Type: image/png
+
+< ./test-files/mixed_codes.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Read Barcodes - PythonPdfService
+POST http://localhost:5003/api/pdf/read-barcodes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="barcode_test.png"
+Content-Type: image/png
+
+< ./test-files/barcode_test.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Read QR Codes - PythonPdfService
+POST http://localhost:5003/api/pdf/read-qr-codes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="qr_test.png"
+Content-Type: image/png
+
+< ./test-files/qr_test.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Read All Codes - PythonPdfService
+POST http://localhost:5003/api/pdf/read-all-codes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="mixed_codes.png"
+Content-Type: image/png
+
+< ./test-files/mixed_codes.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Read Barcodes - GoPdfService
+POST http://localhost:5034/api/pdf/read-barcodes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="barcode_test.png"
+Content-Type: image/png
+
+< ./test-files/barcode_test.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Read QR Codes - GoPdfService
+POST http://localhost:5034/api/pdf/read-qr-codes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="qr_test.png"
+Content-Type: image/png
+
+< ./test-files/qr_test.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Read All Codes - GoPdfService
+POST http://localhost:5034/api/pdf/read-all-codes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="mixed_codes.png"
+Content-Type: image/png
+
+< ./test-files/mixed_codes.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ========================================
+### DIGITAL SIGNATURES
+### ========================================
+
+### Sign PDF - NodeJSPdfService
+POST http://localhost:5033/api/pdf/sign
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Verify Signature - NodeJSPdfService
+POST http://localhost:5033/api/pdf/verify-signature
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="file-sample_100kB.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Data/file-sample_100kB.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Sign PDF - GoPdfService
+POST http://localhost:5034/api/pdf/sign
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="file-sample_500kB.doc"
+Content-Type: application/msword
+
+< ./Data/file-sample_500kB.doc
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Verify Signature - GoPdfService
+POST http://localhost:5034/api/pdf/verify-signature
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="file-sample_500kB.doc"
+Content-Type: application/msword
+
+< ./Data/file-sample_500kB.doc
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ========================================
+### PERFORMANCE TESTS
+### ========================================
+
+### Performance Test - Large Image to PDF
+POST http://localhost:5002/api/pdf/images-to-pdf?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Performance Test - Multiple Large Images
+POST http://localhost:5002/api/pdf/images-to-pdf?outputFormat=A4
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-jamshed-ahmad-560590-1315655.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-jamshed-ahmad-560590-1315655.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="pexels-annpeach-15143046.jpg"
+Content-Type: image/jpeg
+
+< ./Data/pexels-annpeach-15143046.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="sample_5184×3456.jpeg"
+Content-Type: image/jpeg
+
+< ./Data/sample_5184×3456.jpeg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Performance Test - Large Document Conversion
+POST http://localhost:5033/api/pdf/doc-to-pdf
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="file-sample_500kB.doc"
+Content-Type: application/msword
+
+< ./Data/file-sample_500kB.doc
+------WebKitFormBoundary7MA4YWxkTrZu0gW-- 

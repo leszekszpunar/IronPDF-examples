@@ -1,0 +1,14 @@
+Flask==3.0.0
+Flask-CORS==4.0.0
+flask-swagger-ui==4.11.1
+PyPDF2==3.0.1
+Pillow==10.1.0
+img2pdf==0.5.1
+PyMuPDF==1.23.8
+Werkzeug==3.0.1
+opencv-python==4.8.1.78
+numpy==1.24.3
+pyzbar==0.1.9
+qrcode==7.4.2
+qreader==3.10
+easyocr==1.7.0 

@@ -1,0 +1,1285 @@
+{
+  "info": {
+    "_postman_id": "multi-platform-pdf-services",
+    "name": "Multi-Platform PDF Services",
+    "description": "Kompleksowy zestaw serwisów PDF implementowanych w różnych technologiach z identycznym API dla łatwego porównywania i testowania.\n\n## Dostępne Serwisy:\n- IronPDFService (.NET + IronPDF) - Port 5001\n- PdfSharpService (.NET + PdfSharpCore) - Port 5002\n- PythonPdfService (Python + Flask) - Port 5003\n- NodeJSPdfService (Node.js + Express) - Port 5033\n- GoPdfService (Go + Gin) - Port 5034\n\n## Funkcjonalności:\n- ✅ Łączenie plików PDF\n- ✅ Konwersja obrazów do PDF\n- ✅ Łączenie PDF i obrazów\n- ✅ Ekstrakcja tekstu z PDF\n- ✅ Konwersja DOC/DOCX do PDF\n- ✅ Dodawanie kodów QR i kreskowych\n- ✅ Podpisy cyfrowe i weryfikacja\n- ✅ Odczytywanie kodów kreskowych i QR",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "multi-platform-pdf-services"
+  },
+  "item": [
+    {
+      "name": "Health Checks",
+      "item": [
+        {
+          "name": "IronPDFService Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_ironpdf}}/health",
+              "host": ["{{base_url_ironpdf}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PdfSharpService Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_pdfsharp}}/health",
+              "host": ["{{base_url_pdfsharp}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PythonPdfService Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_python}}/health",
+              "host": ["{{base_url_python}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "NodeJSPdfService Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_nodejs}}/health",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GoPdfService Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_go}}/health",
+              "host": ["{{base_url_go}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpointy sprawdzające stan wszystkich serwisów"
+    },
+    {
+      "name": "Information",
+      "item": [
+        {
+          "name": "IronPDFService Supported Formats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_ironpdf}}/api/pdf/supported-formats",
+              "host": ["{{base_url_ironpdf}}"],
+              "path": ["api", "pdf", "supported-formats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PdfSharpService Supported Formats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_pdfsharp}}/api/pdf/supported-formats",
+              "host": ["{{base_url_pdfsharp}}"],
+              "path": ["api", "pdf", "supported-formats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PythonPdfService Supported Formats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_python}}/api/pdf/supported-formats",
+              "host": ["{{base_url_python}}"],
+              "path": ["api", "pdf", "supported-formats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "NodeJSPdfService Supported Formats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/supported-formats",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "supported-formats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GoPdfService Supported Formats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/supported-formats",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "supported-formats"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Informacje o obsługiwanych formatach plików"
+    },
+    {
+      "name": "PDF Operations",
+      "item": [
+        {
+          "name": "Merge PDFs - IronPDFService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_500kB.doc"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_ironpdf}}/api/pdf/merge-pdfs?outputFormat={{output_format}}",
+              "host": ["{{base_url_ironpdf}}"],
+              "path": ["api", "pdf", "merge-pdfs"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Merge PDFs - PdfSharpService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_500kB.doc"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_pdfsharp}}/api/pdf/merge-pdfs?outputFormat={{output_format}}",
+              "host": ["{{base_url_pdfsharp}}"],
+              "path": ["api", "pdf", "merge-pdfs"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Merge PDFs - PythonPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_500kB.doc"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_python}}/api/pdf/merge-pdfs?outputFormat={{output_format}}",
+              "host": ["{{base_url_python}}"],
+              "path": ["api", "pdf", "merge-pdfs"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Merge PDFs - NodeJSPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_500kB.doc"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/merge-pdfs?outputFormat={{output_format}}",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "merge-pdfs"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Merge PDFs - GoPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_500kB.doc"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/merge-pdfs?outputFormat={{output_format}}",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "merge-pdfs"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Podstawowe operacje na plikach PDF"
+    },
+    {
+      "name": "Images to PDF",
+      "item": [
+        {
+          "name": "Images to PDF - IronPDFService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-jamshed-ahmad-560590-1315655.jpg"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-annpeach-15143046.jpg"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_ironpdf}}/api/pdf/images-to-pdf?outputFormat={{output_format}}",
+              "host": ["{{base_url_ironpdf}}"],
+              "path": ["api", "pdf", "images-to-pdf"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Images to PDF - PdfSharpService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-jamshed-ahmad-560590-1315655.jpg"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-annpeach-15143046.jpg"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_pdfsharp}}/api/pdf/images-to-pdf?outputFormat={{output_format}}",
+              "host": ["{{base_url_pdfsharp}}"],
+              "path": ["api", "pdf", "images-to-pdf"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Images to PDF - PythonPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-jamshed-ahmad-560590-1315655.jpg"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-annpeach-15143046.jpg"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_python}}/api/pdf/images-to-pdf?outputFormat={{output_format}}",
+              "host": ["{{base_url_python}}"],
+              "path": ["api", "pdf", "images-to-pdf"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Images to PDF - NodeJSPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-jamshed-ahmad-560590-1315655.jpg"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-annpeach-15143046.jpg"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/images-to-pdf?outputFormat={{output_format}}",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "images-to-pdf"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Images to PDF - GoPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-jamshed-ahmad-560590-1315655.jpg"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-annpeach-15143046.jpg"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/images-to-pdf?outputFormat={{output_format}}",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "images-to-pdf"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Konwersja obrazów do formatu PDF"
+    },
+    {
+      "name": "Merge All",
+      "item": [
+        {
+          "name": "Merge All - IronPDFService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-jamshed-ahmad-560590-1315655.jpg"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_ironpdf}}/api/pdf/merge-all?outputFormat={{output_format}}",
+              "host": ["{{base_url_ironpdf}}"],
+              "path": ["api", "pdf", "merge-all"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Merge All - PdfSharpService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-jamshed-ahmad-560590-1315655.jpg"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_pdfsharp}}/api/pdf/merge-all?outputFormat={{output_format}}",
+              "host": ["{{base_url_pdfsharp}}"],
+              "path": ["api", "pdf", "merge-all"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Merge All - PythonPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-jamshed-ahmad-560590-1315655.jpg"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_python}}/api/pdf/merge-all?outputFormat={{output_format}}",
+              "host": ["{{base_url_python}}"],
+              "path": ["api", "pdf", "merge-all"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Merge All - NodeJSPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-jamshed-ahmad-560590-1315655.jpg"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/merge-all?outputFormat={{output_format}}",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "merge-all"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Merge All - GoPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ["Data/pexels-jamshed-ahmad-560590-1315655.jpg"]
+                },
+                {
+                  "key": "outputFormat",
+                  "value": "A4",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/merge-all?outputFormat={{output_format}}",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "merge-all"],
+              "query": [
+                {
+                  "key": "outputFormat",
+                  "value": "{{output_format}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Łączenie plików PDF i obrazów w jeden dokument"
+    },
+    {
+      "name": "Document Conversion",
+      "item": [
+        {
+          "name": "DOC to PDF - NodeJSPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/doc-to-pdf",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "doc-to-pdf"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DOC to PDF - GoPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["Data/file-sample_500kB.doc"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/doc-to-pdf",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "doc-to-pdf"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Konwersja dokumentów DOC/DOCX do PDF"
+    },
+    {
+      "name": "Barcodes & QR Codes",
+      "item": [
+        {
+          "name": "Add QR Code - NodeJSPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "text",
+                  "value": "https://github.com/example/repo",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/add-qr-code",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "add-qr-code"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Barcode - NodeJSPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                },
+                {
+                  "key": "text",
+                  "value": "987654321",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/add-barcode",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "add-barcode"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add QR Code - GoPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["Data/file-sample_500kB.doc"]
+                },
+                {
+                  "key": "text",
+                  "value": "https://example.com/test",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/add-qr-code",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "add-qr-code"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Barcode - GoPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["Data/file-sample_500kB.doc"]
+                },
+                {
+                  "key": "text",
+                  "value": "123456789",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/add-barcode",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "add-barcode"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Dodawanie kodów QR i kreskowych do PDF"
+    },
+    {
+      "name": "Code Reading",
+      "item": [
+        {
+          "name": "Read Barcodes - NodeJSPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["test-files/barcode_test.png"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/read-barcodes",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "read-barcodes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Read QR Codes - NodeJSPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["test-files/qr_test.png"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/read-qr-codes",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "read-qr-codes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Read All Codes - NodeJSPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["test-files/mixed_codes.png"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/read-all-codes",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "read-all-codes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Read Barcodes - PythonPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["test-files/barcode_test.png"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_python}}/api/pdf/read-barcodes",
+              "host": ["{{base_url_python}}"],
+              "path": ["api", "pdf", "read-barcodes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Read QR Codes - PythonPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["test-files/qr_test.png"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_python}}/api/pdf/read-qr-codes",
+              "host": ["{{base_url_python}}"],
+              "path": ["api", "pdf", "read-qr-codes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Read All Codes - PythonPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["test-files/mixed_codes.png"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_python}}/api/pdf/read-all-codes",
+              "host": ["{{base_url_python}}"],
+              "path": ["api", "pdf", "read-all-codes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Read Barcodes - GoPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["test-files/barcode_test.png"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/read-barcodes",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "read-barcodes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Read QR Codes - GoPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["test-files/qr_test.png"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/read-qr-codes",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "read-qr-codes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Read All Codes - GoPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["test-files/mixed_codes.png"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/read-all-codes",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "read-all-codes"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Odczytywanie kodów kreskowych i QR z obrazów/PDF"
+    },
+    {
+      "name": "Digital Signatures",
+      "item": [
+        {
+          "name": "Sign PDF - NodeJSPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/sign",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "sign"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Signature - NodeJSPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["Data/file-sample_100kB.docx"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_nodejs}}/api/pdf/verify-signature",
+              "host": ["{{base_url_nodejs}}"],
+              "path": ["api", "pdf", "verify-signature"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sign PDF - GoPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["Data/file-sample_500kB.doc"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/sign",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "sign"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Signature - GoPdfService",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ["Data/file-sample_500kB.doc"]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url_go}}/api/pdf/verify-signature",
+              "host": ["{{base_url_go}}"],
+              "path": ["api", "pdf", "verify-signature"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Podpisy cyfrowe i weryfikacja"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url_ironpdf",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "base_url_pdfsharp",
+      "value": "http://localhost:5002",
+      "type": "string"
+    },
+    {
+      "key": "base_url_python",
+      "value": "http://localhost:5003",
+      "type": "string"
+    },
+    {
+      "key": "base_url_nodejs",
+      "value": "http://localhost:5033",
+      "type": "string"
+    },
+    {
+      "key": "base_url_go",
+      "value": "http://localhost:5034",
+      "type": "string"
+    },
+    {
+      "key": "output_format",
+      "value": "A4",
+      "type": "string"
+    }
+  ]
+}

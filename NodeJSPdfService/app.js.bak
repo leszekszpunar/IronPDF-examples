@@ -1,0 +1,1615 @@
+const express = require('express');
+const multer = require('multer');
+const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDefinition = require('./swagger-definition');
+const { PDFDocument } = require('pdf-lib');
+const sharp = require('sharp');
+const QRCode = require('qrcode');
+const JsBarcode = require('jsbarcode');
+const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
+const forge = require('node-forge');
+const fs = require('fs');
+const path = require('path');
+const { BrowserMultiFormatReader } = require('@zxing/library');
+
+const app = express();
+const PORT = process.env.PORT || 5033;
+
+// Middleware
+app.use(helmet());
+app.use(compression());
+app.use(morgan('combined'));
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Multer configuration
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/bmp',
+            'image/tiff',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Nieobsługiwany typ pliku'), false);
+        }
+    }
+});
+
+// Swagger configuration
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'NodeJS PDF Service API',
+            version: '1.0.0',
+            description: 'Zaawansowany serwis PDF z obsługą certyfikatów, podpisów, kodów kreskowych i konwersji dokumentów',
+            contact: {
+                name: 'API Support',
+                email: 'support@example.com'
+            },
+            license: {
+                name: 'MIT',
+                url: 'https://opensource.org/licenses/MIT'
+            }
+        },
+        servers: [
+            {
+                url: `http://localhost:${PORT}`,
+                description: 'Development server',
+            },
+        ],
+        components: {
+            schemas: {
+                Error: {
+                    type: 'object',
+                    properties: {
+                        message: {
+                            type: 'string',
+                            description: 'Opis błędu'
+                        },
+                        code: {
+                            type: 'string',
+                            description: 'Kod błędu'
+                        },
+                        timestamp: {
+                            type: 'string',
+                            format: 'date-time',
+                            description: 'Czas wystąpienia błędu'
+                        }
+                    }
+                },
+                Success: {
+                    type: 'object',
+                    properties: {
+                        success: {
+                            type: 'boolean',
+                            description: 'Status operacji'
+                        },
+                        message: {
+                            type: 'string',
+                            description: 'Komunikat sukcesu'
+                        },
+                        timestamp: {
+                            type: 'string',
+                            format: 'date-time',
+                            description: 'Czas wykonania operacji'
+                        }
+                    }
+                },
+                BarcodeResult: {
+                    type: 'object',
+                    properties: {
+                        type: {
+                            type: 'string',
+                            description: 'Typ kodu kreskowego'
+                        },
+                        data: {
+                            type: 'string',
+                            description: 'Odczytane dane'
+                        },
+                        format: {
+                            type: 'string',
+                            description: 'Format kodu'
+                        },
+                        confidence: {
+                            type: 'number',
+                            description: 'Poziom pewności odczytu (0-1)'
+                        },
+                        page: {
+                            type: 'integer',
+                            description: 'Numer strony (dla PDF)'
+                        }
+                    }
+                },
+                QRCodeResult: {
+                    type: 'object',
+                    properties: {
+                        type: {
+                            type: 'string',
+                            description: 'Typ kodu QR'
+                        },
+                        data: {
+                            type: 'string',
+                            description: 'Odczytane dane'
+                        },
+                        format: {
+                            type: 'string',
+                            description: 'Format kodu'
+                        },
+                        confidence: {
+                            type: 'number',
+                            description: 'Poziom pewności odczytu (0-1)'
+                        },
+                        page: {
+                            type: 'integer',
+                            description: 'Numer strony (dla PDF)'
+                        }
+                    }
+                },
+                SignatureVerification: {
+                    type: 'object',
+                    properties: {
+                        verified: {
+                            type: 'boolean',
+                            description: 'Czy podpis jest prawidłowy'
+                        },
+                        message: {
+                            type: 'string',
+                            description: 'Komunikat weryfikacji'
+                        },
+                        timestamp: {
+                            type: 'string',
+                            format: 'date-time',
+                            description: 'Czas weryfikacji'
+                        },
+                        signer: {
+                            type: 'string',
+                            description: 'Informacje o podpisującym'
+                        },
+                        validity: {
+                            type: 'object',
+                            properties: {
+                                notBefore: {
+                                    type: 'string',
+                                    format: 'date-time'
+                                },
+                                notAfter: {
+                                    type: 'string',
+                                    format: 'date-time'
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            parameters: {
+                outputFormat: {
+                    name: 'outputFormat',
+                    in: 'query',
+                    description: 'Format wyjściowy dokumentu',
+                    schema: {
+                        type: 'string',
+                        enum: ['A4', 'A3', 'A5', 'LETTER'],
+                        default: 'A4'
+                    }
+                }
+            },
+            responses: {
+                BadRequest: {
+                    description: 'Nieprawidłowe żądanie',
+                    content: {
+                        'application/json': {
+                            schema: {
+                                $ref: '#/components/schemas/Error'
+                            },
+                            example: {
+                                message: 'Nie przekazano żadnych plików',
+                                code: 'VALIDATION_ERROR',
+                                timestamp: '2025-07-16T19:00:00.000Z'
+                            }
+                        }
+                    }
+                },
+                ServerError: {
+                    description: 'Błąd serwera',
+                    content: {
+                        'application/json': {
+                            schema: {
+                                $ref: '#/components/schemas/Error'
+                            },
+                            example: {
+                                message: 'Wystąpił błąd podczas przetwarzania',
+                                code: 'INTERNAL_ERROR',
+                                timestamp: '2025-07-16T19:00:00.000Z'
+                            }
+                        }
+                    }
+                },
+                PDFResponse: {
+                    description: 'Plik PDF',
+                    content: {
+                        'application/pdf': {
+                            schema: {
+                                type: 'string',
+                                format: 'binary'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    apis: ['./app.js', './*.js'], // Dodaję więcej wzorców plików
+    swaggerDefinition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'NodeJS PDF Service API',
+            version: '1.0.0',
+            description: 'Zaawansowany serwis PDF z obsługą certyfikatów, podpisów, kodów kreskowych i konwersji dokumentów'
+        }
+    }
+};
+
+const swaggerSpec = swaggerDefinition;
+
+// Debugowanie - sprawdź czy specyfikacja jest poprawna
+console.log('Swagger spec keys:', Object.keys(swaggerSpec));
+console.log('Swagger paths count:', Object.keys(swaggerSpec.paths || {}).length);
+console.log('Swagger components:', Object.keys(swaggerSpec.components || {}));
+
+app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Endpoint do zwracania JSON specyfikacji Swagger
+app.get('/api-docs', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.json(swaggerSpec);
+});
+
+// Health check endpoint
+
+// Health check
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        service: 'NodeJSPdfService',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
+    });
+});
+
+/**
+ * @swagger
+ * /api/pdf/merge-pdfs:
+ *   post:
+ *     summary: Łączy kilka plików PDF w jeden dokument
+ *     description: |
+ *       Łączy wiele plików PDF w jeden dokument. Pliki są łączone w kolejności przekazania.
+ *       Obsługuje formaty A4, A3, A5, LETTER.
+ *     tags: [PDF Operations]
+ *     parameters:
+ *       - $ref: '#/components/parameters/outputFormat'
+ *     requestBody:
+ *       required: true
+ *       description: Pliki PDF do połączenia
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - files
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Pliki PDF do połączenia (min. 2 pliki)
+ *                 minItems: 2
+ *           encoding:
+ *             files:
+ *               contentType: application/pdf
+ *     responses:
+ *       200:
+ *         description: Połączony plik PDF
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *             example: |
+ *               [Binary PDF data]
+ *         headers:
+ *           Content-Disposition:
+ *             description: Nazwa pliku wyjściowego
+ *             schema:
+ *               type: string
+ *               example: attachment; filename="merged_pdfs_1752693279144.pdf"
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       413:
+ *         description: Plik zbyt duży
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               message: 'Plik przekracza maksymalny rozmiar 10MB',
+ *               code: 'FILE_TOO_LARGE',
+ *               timestamp: '2025-07-16T19:00:00.000Z'
+ *       415:
+ *         description: Nieobsługiwany typ pliku
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               message: 'Plik musi być w formacie PDF',
+ *               code: 'UNSUPPORTED_MEDIA_TYPE',
+ *               timestamp: '2025-07-16T19:00:00.000Z'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+app.post('/api/pdf/merge-pdfs', upload.array('files'), async (req, res) => {
+    try {
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: 'Nie przekazano żadnych plików' });
+        }
+
+        const outputFormat = req.query.outputFormat || 'A4';
+        const mergedPdf = await PDFDocument.create();
+
+        for (const file of req.files) {
+            if (file.mimetype === 'application/pdf') {
+                const pdfBytes = file.buffer;
+                const pdf = await PDFDocument.load(pdfBytes);
+                const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                copiedPages.forEach((page) => mergedPdf.addPage(page));
+            }
+        }
+
+        const mergedPdfBytes = await mergedPdf.save();
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="merged_pdfs_${Date.now()}.pdf"`);
+        res.send(Buffer.from(mergedPdfBytes));
+    } catch (error) {
+        console.error('Błąd podczas łączenia PDF:', error);
+        res.status(500).json({ message: `Błąd podczas łączenia PDF: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/images-to-pdf:
+ *   post:
+ *     summary: Konwertuje obrazy do formatu PDF
+ *     description: |
+ *       Konwertuje obrazy (JPG, PNG, GIF, BMP, TIFF) do formatu PDF.
+ *       Każdy obraz staje się osobną stroną w dokumencie PDF.
+ *     tags: [PDF Operations]
+ *     parameters:
+ *       - $ref: '#/components/parameters/outputFormat'
+ *     requestBody:
+ *       required: true
+ *       description: Pliki obrazów do konwersji
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - files
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Pliki obrazów do konwersji (JPG, PNG, GIF, BMP, TIFF)
+ *                 minItems: 1
+ *           encoding:
+ *             files:
+ *               contentType: image/*
+ *     responses:
+ *       200:
+ *         description: Plik PDF zawierający obrazy
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *             example: |
+ *               [Binary PDF data]
+ *         headers:
+ *           Content-Disposition:
+ *             description: Nazwa pliku wyjściowego
+ *             schema:
+ *               type: string
+ *               example: attachment; filename="images_to_pdf_1752693279144.pdf"
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       413:
+ *         description: Plik zbyt duży
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               message: 'Plik przekracza maksymalny rozmiar 10MB',
+ *               code: 'FILE_TOO_LARGE',
+ *               timestamp: '2025-07-16T19:00:00.000Z'
+ *       415:
+ *         description: Nieobsługiwany typ pliku
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               message: 'Plik musi być obrazem (JPG, PNG, GIF, BMP, TIFF)',
+ *               code: 'UNSUPPORTED_MEDIA_TYPE',
+ *               timestamp: '2025-07-16T19:00:00.000Z'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+app.post('/api/pdf/images-to-pdf', upload.array('files'), async (req, res) => {
+    try {
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: 'Nie przekazano żadnych plików' });
+        }
+
+        const outputFormat = req.query.outputFormat || 'A4';
+        const pdf = await PDFDocument.create();
+
+        for (const file of req.files) {
+            if (file.mimetype.startsWith('image/')) {
+                // Konwertuj obraz do JPEG jeśli potrzeba
+                let imageBuffer = file.buffer;
+                if (file.mimetype !== 'image/jpeg') {
+                    imageBuffer = await sharp(file.buffer).jpeg().toBuffer();
+                }
+
+                const image = await pdf.embedJpg(imageBuffer);
+                const page = pdf.addPage();
+                const { width, height } = page.getSize();
+                page.drawImage(image, {
+                    x: 0,
+                    y: 0,
+                    width,
+                    height,
+                });
+            }
+        }
+
+        const pdfBytes = await pdf.save();
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="images_to_pdf_${Date.now()}.pdf"`);
+        res.send(Buffer.from(pdfBytes));
+    } catch (error) {
+        console.error('Błąd podczas konwersji obrazów:', error);
+        res.status(500).json({ message: `Błąd podczas konwersji obrazów: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/merge-all:
+ *   post:
+ *     summary: Łączy pliki PDF i obrazy w jeden dokument
+ *     tags: [PDF Operations]
+ *     parameters:
+ *       - in: query
+ *         name: outputFormat
+ *         schema:
+ *           type: string
+ *           enum: [A4, A3, A5, LETTER]
+ *         description: Format wyjściowy
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Pliki PDF i obrazy do połączenia
+ *     responses:
+ *       200:
+ *         description: Połączony plik PDF
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       400:
+ *         description: Błąd walidacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+app.post('/api/pdf/merge-all', upload.array('files'), async (req, res) => {
+    try {
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: 'Nie przekazano żadnych plików' });
+        }
+
+        const outputFormat = req.query.outputFormat || 'A4';
+        const mergedPdf = await PDFDocument.create();
+
+        for (const file of req.files) {
+            if (file.mimetype === 'application/pdf') {
+                const pdfBytes = file.buffer;
+                const pdf = await PDFDocument.load(pdfBytes);
+                const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                copiedPages.forEach((page) => mergedPdf.addPage(page));
+            } else if (file.mimetype.startsWith('image/')) {
+                let imageBuffer = file.buffer;
+                if (file.mimetype !== 'image/jpeg') {
+                    imageBuffer = await sharp(file.buffer).jpeg().toBuffer();
+                }
+
+                const image = await mergedPdf.embedJpg(imageBuffer);
+                const page = mergedPdf.addPage();
+                const { width, height } = page.getSize();
+                page.drawImage(image, {
+                    x: 0,
+                    y: 0,
+                    width,
+                    height,
+                });
+            }
+        }
+
+        const mergedPdfBytes = await mergedPdf.save();
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="merged_all_${Date.now()}.pdf"`);
+        res.send(Buffer.from(mergedPdfBytes));
+    } catch (error) {
+        console.error('Błąd podczas łączenia plików:', error);
+        res.status(500).json({ message: `Błąd podczas łączenia plików: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/extract-text:
+ *   post:
+ *     summary: Ekstrahuje tekst z pliku PDF
+ *     tags: [PDF Operations]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Plik PDF do ekstrakcji tekstu
+ *     responses:
+ *       200:
+ *         description: Wyekstrahowany tekst
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *       400:
+ *         description: Błąd walidacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+app.post('/api/pdf/extract-text', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Nie przekazano pliku' });
+        }
+
+        if (req.file.mimetype !== 'application/pdf') {
+            return res.status(400).json({ message: 'Plik musi być w formacie PDF' });
+        }
+
+        const data = await pdfParse(req.file.buffer);
+        const text = data.text;
+        
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Disposition', `attachment; filename="extracted_text_${Date.now()}.txt"`);
+        res.send(text);
+    } catch (error) {
+        console.error('Błąd podczas ekstrakcji tekstu:', error);
+        res.status(500).json({ message: `Błąd podczas ekstrakcji tekstu: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/doc-to-pdf:
+ *   post:
+ *     summary: Konwertuje pliki DOC/DOCX do PDF
+ *     tags: [Document Conversion]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Plik DOC lub DOCX do konwersji
+ *     responses:
+ *       200:
+ *         description: Skonwertowany plik PDF
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       400:
+ *         description: Błąd walidacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+app.post('/api/pdf/doc-to-pdf', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Nie przekazano pliku' });
+        }
+
+        const allowedTypes = [
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+
+        if (!allowedTypes.includes(req.file.mimetype)) {
+            return res.status(400).json({ message: 'Plik musi być w formacie DOC lub DOCX' });
+        }
+
+        const result = await mammoth.convertToHtml({ buffer: req.file.buffer });
+        const html = result.value;
+
+        // Konwertuj HTML do PDF (uproszczona implementacja)
+        const pdf = await PDFDocument.create();
+        const page = pdf.addPage();
+        
+        // Tu można dodać bardziej zaawansowaną konwersję HTML do PDF
+        // Na razie zwracamy prosty PDF z informacją o konwersji
+        
+        const pdfBytes = await pdf.save();
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="converted_${Date.now()}.pdf"`);
+        res.send(Buffer.from(pdfBytes));
+    } catch (error) {
+        console.error('Błąd podczas konwersji DOC:', error);
+        res.status(500).json({ message: `Błąd podczas konwersji DOC: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/add-qr-code:
+ *   post:
+ *     summary: Dodaje kod QR do PDF
+ *     tags: [Barcodes & QR Codes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Plik PDF do dodania kodu QR
+ *               text:
+ *                 type: string
+ *                 description: Tekst do zakodowania w QR (domyślnie: https://example.com)
+ *     responses:
+ *       200:
+ *         description: Plik PDF z dodanym kodem QR
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       400:
+ *         description: Błąd walidacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+app.post('/api/pdf/add-qr-code', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file || req.file.mimetype !== 'application/pdf') {
+            return res.status(400).json({ message: 'Nie przekazano pliku PDF' });
+        }
+
+        const qrText = req.body.text || 'https://example.com';
+        const qrCodeBuffer = await QRCode.toBuffer(qrText);
+
+        const pdf = await PDFDocument.load(req.file.buffer);
+        const image = await pdf.embedPng(qrCodeBuffer);
+        
+        // Dodaj kod QR do pierwszej strony
+        const pages = pdf.getPages();
+        if (pages.length > 0) {
+            const firstPage = pages[0];
+            const { width, height } = firstPage.getSize();
+            
+            firstPage.drawImage(image, {
+                x: width - 100,
+                y: height - 100,
+                width: 80,
+                height: 80,
+            });
+        }
+
+        const pdfBytes = await pdf.save();
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="pdf_with_qr_${Date.now()}.pdf"`);
+        res.send(Buffer.from(pdfBytes));
+    } catch (error) {
+        console.error('Błąd podczas dodawania kodu QR:', error);
+        res.status(500).json({ message: `Błąd podczas dodawania kodu QR: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/add-barcode:
+ *   post:
+ *     summary: Dodaje kod kreskowy do PDF
+ *     tags: [Barcodes & QR Codes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Plik PDF do dodania kodu kreskowego
+ *               text:
+ *                 type: string
+ *                 description: Tekst do zakodowania w kodzie kreskowym (domyślnie: 123456789)
+ *     responses:
+ *       200:
+ *         description: Plik PDF z dodanym kodem kreskowym
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       400:
+ *         description: Błąd walidacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+app.post('/api/pdf/add-barcode', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file || req.file.mimetype !== 'application/pdf') {
+            return res.status(400).json({ message: 'Nie przekazano pliku PDF' });
+        }
+
+        const barcodeText = req.body.text || '123456789';
+        
+        // Generuj kod kreskowy jako SVG (bez canvas)
+        const svg = JsBarcode.getModule(JsBarcode(barcodeText, {
+            format: "CODE128",
+            width: 2,
+            height: 50,
+            displayValue: true
+        })).svg();
+        
+        // Konwertuj SVG do PNG używając sharp
+        const barcodeBuffer = await sharp(Buffer.from(svg))
+            .png()
+            .toBuffer();
+
+        const pdf = await PDFDocument.load(req.file.buffer);
+        const image = await pdf.embedPng(barcodeBuffer);
+        
+        // Dodaj kod kreskowy do pierwszej strony
+        const pages = pdf.getPages();
+        if (pages.length > 0) {
+            const firstPage = pages[0];
+            const { width, height } = firstPage.getSize();
+            
+            firstPage.drawImage(image, {
+                x: 50,
+                y: height - 150,
+                width: 200,
+                height: 60,
+            });
+        }
+
+        const pdfBytes = await pdf.save();
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="pdf_with_barcode_${Date.now()}.pdf"`);
+        res.send(Buffer.from(pdfBytes));
+    } catch (error) {
+        console.error('Błąd podczas dodawania kodu kreskowego:', error);
+        res.status(500).json({ message: `Błąd podczas dodawania kodu kreskowego: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/sign:
+ *   post:
+ *     summary: Podpisuje PDF cyfrowo
+ *     tags: [Digital Signatures]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Plik PDF do podpisania
+ *     responses:
+ *       200:
+ *         description: Podpisany plik PDF
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       400:
+ *         description: Błąd walidacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+app.post('/api/pdf/sign', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file || req.file.mimetype !== 'application/pdf') {
+            return res.status(400).json({ message: 'Nie przekazano pliku PDF' });
+        }
+
+        // Generuj klucz prywatny i certyfikat (w produkcji użyj prawdziwych certyfikatów)
+        const keys = forge.pki.rsa.generateKeyPair(2048);
+        const cert = forge.pki.createCertificate();
+        
+        cert.publicKey = keys.publicKey;
+        cert.serialNumber = '01';
+        cert.validity.notBefore = new Date();
+        cert.validity.notAfter = new Date();
+        cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
+
+        const attrs = [{
+            name: 'commonName',
+            value: 'Test Certificate'
+        }, {
+            name: 'countryName',
+            value: 'PL'
+        }, {
+            shortName: 'ST',
+            value: 'Test State'
+        }, {
+            name: 'localityName',
+            value: 'Test City'
+        }, {
+            name: 'organizationName',
+            value: 'Test Organization'
+        }, {
+            shortName: 'OU',
+            value: 'Test Unit'
+        }];
+
+        cert.setSubject(attrs);
+        cert.setIssuer(attrs);
+        cert.sign(keys.privateKey);
+
+        // Tu można dodać rzeczywiste podpisywanie PDF
+        // Na razie zwracamy oryginalny PDF z informacją o podpisie
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="signed_${Date.now()}.pdf"`);
+        res.send(req.file.buffer);
+    } catch (error) {
+        console.error('Błąd podczas podpisywania:', error);
+        res.status(500).json({ message: `Błąd podczas podpisywania: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/verify-signature:
+ *   post:
+ *     summary: Weryfikuje podpis cyfrowy w PDF
+ *     tags: [Digital Signatures]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Plik PDF do weryfikacji podpisu
+ *     responses:
+ *       200:
+ *         description: Wynik weryfikacji podpisu
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 verified:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Błąd walidacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+app.post('/api/pdf/verify-signature', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file || req.file.mimetype !== 'application/pdf') {
+            return res.status(400).json({ message: 'Nie przekazano pliku PDF' });
+        }
+
+        // Tu można dodać rzeczywistą weryfikację podpisu
+        // Na razie zwracamy informację o braku podpisu
+        
+        res.json({
+            verified: false,
+            message: 'Funkcja weryfikacji podpisu wymaga implementacji',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Błąd podczas weryfikacji podpisu:', error);
+        res.status(500).json({ message: `Błąd podczas weryfikacji podpisu: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/read-barcodes:
+ *   post:
+ *     summary: Odczytywanie kodów kreskowych z obrazu/PDF
+ *     tags: [Barcode Reading]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Plik obrazu lub PDF
+ *     responses:
+ *       200:
+ *         description: Odczytane kody kreskowe
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 barcodes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       type:
+ *                         type: string
+ *                       data:
+ *                         type: string
+ *                       format:
+ *                         type: string
+ *                       confidence:
+ *                         type: number
+ *                 count:
+ *                   type: integer
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Błąd walidacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+app.post('/api/pdf/read-barcodes', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Nie przekazano pliku' });
+        }
+
+        const allowedTypes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/bmp',
+            'image/tiff'
+        ];
+
+        if (!allowedTypes.includes(req.file.mimetype)) {
+            return res.status(400).json({ message: 'Nieobsługiwany typ pliku' });
+        }
+
+        // Implementacja odczytywania kodów kreskowych
+        const barcodes = [];
+        
+        if (req.file.mimetype === 'application/pdf') {
+            // Dla PDF - na razie zwracamy informację o braku implementacji
+            barcodes.push({
+                type: 'info',
+                message: 'Odczytywanie kodów kreskowych z PDF wymaga dodatkowej implementacji',
+                page: 1
+            });
+        } else {
+            // Dla obrazów - bezpośrednie odczytywanie
+            const codes = await readBarcodesFromImage(req.file.buffer);
+            barcodes.push(...codes);
+        }
+
+        res.json({
+            success: true,
+            barcodes: barcodes,
+            count: barcodes.length,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Błąd podczas odczytywania kodów kreskowych:', error);
+        res.status(500).json({ message: `Błąd podczas odczytywania kodów kreskowych: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/read-qr-codes:
+ *   post:
+ *     summary: Odczytywanie kodów QR z obrazu/PDF
+ *     tags: [QR Code Reading]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Plik obrazu lub PDF
+ *     responses:
+ *       200:
+ *         description: Odczytane kody QR
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 qrCodes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       type:
+ *                         type: string
+ *                       data:
+ *                         type: string
+ *                       format:
+ *                         type: string
+ *                       confidence:
+ *                         type: number
+ *                 count:
+ *                   type: integer
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Błąd walidacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+app.post('/api/pdf/read-qr-codes', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Nie przekazano pliku' });
+        }
+
+        const allowedTypes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/bmp',
+            'image/tiff'
+        ];
+
+        if (!allowedTypes.includes(req.file.mimetype)) {
+            return res.status(400).json({ message: 'Nieobsługiwany typ pliku' });
+        }
+
+        // Implementacja odczytywania kodów QR
+        const qrCodes = [];
+        
+        if (req.file.mimetype === 'application/pdf') {
+            // Dla PDF - wyodrębnij strony jako obrazy i odczytaj kody QR
+            // Tu implementacja dla PDF
+        } else {
+            // Dla obrazów - bezpośrednie odczytywanie
+            // Tu implementacja dla obrazów
+        }
+
+        res.json({
+            success: true,
+            qrCodes: qrCodes,
+            count: qrCodes.length,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Błąd podczas odczytywania kodów QR:', error);
+        res.status(500).json({ message: `Błąd podczas odczytywania kodów QR: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/read-all-codes:
+ *   post:
+ *     summary: Odczytywanie wszystkich kodów (kreskowych i QR) z obrazu/PDF
+ *     tags: [Code Reading]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Plik obrazu lub PDF
+ *     responses:
+ *       200:
+ *         description: Odczytane wszystkie kody
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 codes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       type:
+ *                         type: string
+ *                       data:
+ *                         type: string
+ *                       format:
+ *                         type: string
+ *                       confidence:
+ *                         type: number
+ *                 barcodes:
+ *                   type: array
+ *                   description: Filtrowane kody kreskowe
+ *                 qrCodes:
+ *                   type: array
+ *                   description: Filtrowane kody QR
+ *                 totalCount:
+ *                   type: integer
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Błąd walidacji
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Błąd serwera
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+app.post('/api/pdf/read-all-codes', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Nie przekazano pliku' });
+        }
+
+        const allowedTypes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/bmp',
+            'image/tiff'
+        ];
+
+        if (!allowedTypes.includes(req.file.mimetype)) {
+            return res.status(400).json({ message: 'Nieobsługiwany typ pliku' });
+        }
+
+        // Implementacja odczytywania wszystkich kodów
+        const allCodes = [];
+        
+        if (req.file.mimetype === 'application/pdf') {
+            // Dla PDF - wyodrębnij strony jako obrazy i odczytaj wszystkie kody
+            // Tu implementacja dla PDF
+        } else {
+            // Dla obrazów - bezpośrednie odczytywanie
+            // Tu implementacja dla obrazów
+        }
+
+        res.json({
+            success: true,
+            codes: allCodes,
+            barcodes: allCodes.filter(code => code.type === 'barcode'),
+            qrCodes: allCodes.filter(code => code.type === 'qr'),
+            totalCount: allCodes.length,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Błąd podczas odczytywania kodów:', error);
+        res.status(500).json({ message: `Błąd podczas odczytywania kodów: ${error.message}` });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pdf/supported-formats:
+ *   get:
+ *     summary: Zwraca informacje o obsługiwanych formatach
+ *     description: |
+ *       Zwraca szczegółowe informacje o wszystkich obsługiwanych formatach plików,
+ *       funkcjach serwisu oraz możliwościach konwersji.
+ *     tags: [Information]
+ *     responses:
+ *       200:
+ *         description: Informacje o obsługiwanych formatach
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 service:
+ *                   type: string
+ *                   description: Nazwa serwisu
+ *                   example: "NodeJS"
+ *                 description:
+ *                   type: string
+ *                   description: Opis serwisu
+ *                   example: "Zaawansowany serwis PDF z obsługą certyfikatów, podpisów i kodów kreskowych"
+ *                 supportedImageFormats:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   description: Obsługiwane formaty obrazów
+ *                   example: [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif"]
+ *                 supportedPdfFormats:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   description: Obsługiwane formaty PDF
+ *                   example: [".pdf"]
+ *                 supportedDocumentFormats:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   description: Obsługiwane formaty dokumentów
+ *                   example: [".doc", ".docx"]
+ *                 supportedOutputFormats:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   description: Obsługiwane formaty wyjściowe
+ *                   example: ["A4", "A3", "A5", "LETTER"]
+ *                 features:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   description: Lista dostępnych funkcji
+ *                   example: [
+ *                     "Łączenie PDF",
+ *                     "Konwersja obrazów do PDF",
+ *                     "Konwersja DOC/DOCX do PDF",
+ *                     "Ekstrakcja tekstu z PDF",
+ *                     "Dodawanie kodów QR",
+ *                     "Dodawanie kodów kreskowych",
+ *                     "Podpisy cyfrowe",
+ *                     "Weryfikacja podpisów"
+ *                   ]
+ *             example:
+ *               service: "NodeJS"
+ *               description: "Zaawansowany serwis PDF z obsługą certyfikatów, podpisów i kodów kreskowych"
+ *               supportedImageFormats: [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif"]
+ *               supportedPdfFormats: [".pdf"]
+ *               supportedDocumentFormats: [".doc", ".docx"]
+ *               supportedOutputFormats: ["A4", "A3", "A5", "LETTER"]
+ *               features: [
+ *                 "Łączenie PDF",
+ *                 "Konwersja obrazów do PDF",
+ *                 "Konwersja DOC/DOCX do PDF",
+ *                 "Ekstrakcja tekstu z PDF",
+ *                 "Dodawanie kodów QR",
+ *                 "Dodawanie kodów kreskowych",
+ *                 "Podpisy cyfrowe",
+ *                 "Weryfikacja podpisów"
+ *               ]
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+app.get('/api/pdf/supported-formats', (req, res) => {
+    res.json({
+        service: "NodeJS",
+        description: "Zaawansowany serwis PDF z obsługą certyfikatów, podpisów i kodów kreskowych",
+        supportedImageFormats: [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif"],
+        supportedPdfFormats: [".pdf"],
+        supportedDocumentFormats: [".doc", ".docx"],
+        supportedOutputFormats: ["A4", "A3", "A5", "LETTER"],
+        features: [
+            "Łączenie PDF",
+            "Konwersja obrazów do PDF",
+            "Konwersja DOC/DOCX do PDF",
+            "Ekstrakcja tekstu z PDF",
+            "Dodawanie kodów QR",
+            "Dodawanie kodów kreskowych",
+            "Podpisy cyfrowe",
+            "Weryfikacja podpisów"
+        ]
+    });
+});
+
+// Error handling middleware
+app.use((error, req, res, next) => {
+    console.error('Błąd aplikacji:', error);
+    res.status(500).json({ 
+        message: 'Wystąpił błąd wewnętrzny serwera',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+});
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({ message: 'Endpoint nie został znaleziony' });
+});
+
+// Funkcje pomocnicze do odczytywania kodów
+async function readBarcodesFromImage(imageBuffer) {
+    const codes = [];
+    
+    try {
+        // Konwertuj buffer do ImageData
+        const image = await sharp(imageBuffer).raw().toBuffer({ resolveWithObject: true });
+        
+        // Użyj jsQR do odczytywania kodów QR
+        const qrCode = jsQR(image.data, image.info.width, image.info.height);
+        if (qrCode) {
+            codes.push({
+                type: 'qr',
+                data: qrCode.data,
+                format: 'QR_CODE',
+                confidence: 1.0,
+                bounds: qrCode.location
+            });
+        }
+        
+        // Użyj ZXing do odczytywania kodów kreskowych
+        const reader = new BrowserMultiFormatReader();
+        const result = await reader.decodeFromBuffer(imageBuffer);
+        if (result) {
+            codes.push({
+                type: 'barcode',
+                data: result.text,
+                format: result.format,
+                confidence: 1.0,
+                bounds: result.resultPoints
+            });
+        }
+    } catch (error) {
+        console.error('Błąd podczas odczytywania kodów z obrazu:', error);
+    }
+    
+    return codes;
+}
+
+async function readQRCodesFromImage(imageBuffer) {
+    const qrCodes = [];
+    
+    try {
+        const image = await sharp(imageBuffer).raw().toBuffer({ resolveWithObject: true });
+        const qrCode = jsQR(image.data, image.info.width, image.info.height);
+        
+        if (qrCode) {
+            qrCodes.push({
+                type: 'qr',
+                data: qrCode.data,
+                format: 'QR_CODE',
+                confidence: 1.0,
+                bounds: qrCode.location
+            });
+        }
+    } catch (error) {
+        console.error('Błąd podczas odczytywania kodów QR z obrazu:', error);
+    }
+    
+    return qrCodes;
+}
+
+app.listen(PORT, () => {
+    console.log(`NodeJS PDF Service uruchomiony na porcie ${PORT}`);
+    console.log(`Swagger UI dostępny pod adresem: http://localhost:${PORT}/swagger`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
+}); 

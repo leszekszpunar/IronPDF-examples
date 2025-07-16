@@ -1,0 +1,6 @@
+@IronPDFService_HostAddress = http://localhost:5030
+
+GET {{IronPDFService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

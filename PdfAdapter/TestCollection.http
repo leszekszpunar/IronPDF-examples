@@ -1,0 +1,233 @@
+### Kolekcja testów PDF Services - Porównanie wydajności i jakości
+
+### 1. Test łączenia PDF - IronPDF Service
+POST http://localhost:5001/api/pdf/merge
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test1.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test1.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test2.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test2.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 2. Test łączenia PDF - PdfSharp Service
+POST http://localhost:5002/api/pdf/merge
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test1.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test1.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test2.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test2.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 3. Test łączenia PDF - Python Service
+POST http://localhost:5003/api/pdf/merge
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test1.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test1.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test2.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test2.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 4. Test konwersji obrazów do PDF - IronPDF Service
+POST http://localhost:5001/api/pdf/images-to-pdf
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="image1.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/image1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="image2.png"
+Content-Type: image/png
+
+< ./test-files/image2.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 5. Test konwersji obrazów do PDF - PdfSharp Service
+POST http://localhost:5002/api/pdf/images-to-pdf
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="image1.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/image1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="image2.png"
+Content-Type: image/png
+
+< ./test-files/image2.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 6. Test konwersji obrazów do PDF - Python Service
+POST http://localhost:5003/api/pdf/images-to-pdf
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="image1.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/image1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="image2.png"
+Content-Type: image/png
+
+< ./test-files/image2.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 7. Test łączenia PDF i obrazów - IronPDF Service
+POST http://localhost:5001/api/pdf/merge-all
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test1.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test1.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="image1.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/image1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test2.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test2.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 8. Test łączenia PDF i obrazów - PdfSharp Service
+POST http://localhost:5002/api/pdf/merge-all
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test1.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test1.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="image1.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/image1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test2.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test2.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 9. Test łączenia PDF i obrazów - Python Service
+POST http://localhost:5003/api/pdf/merge-all
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test1.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test1.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="image1.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/image1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test2.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test2.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 10. Test ekstrakcji tekstu - IronPDF Service
+POST http://localhost:5001/api/pdf/extract-text
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="test1.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test1.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 11. Test ekstrakcji tekstu - Python Service
+POST http://localhost:5003/api/pdf/extract-text
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="test1.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test1.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 12. Test zdrowia - IronPDF Service
+GET http://localhost:5001/health
+
+### 13. Test zdrowia - PdfSharp Service
+GET http://localhost:5002/health
+
+### 14. Test zdrowia - Python Service
+GET http://localhost:5003/health
+
+### 15. Test informacji o serwisie - IronPDF Service
+GET http://localhost:5001/api/pdf/info
+
+### 16. Test informacji o serwisie - PdfSharp Service
+GET http://localhost:5002/api/pdf/info
+
+### 17. Test informacji o serwisie - Python Service
+GET http://localhost:5003/api/pdf/info
+
+### 18. Test z różnymi formatami stron - IronPDF Service
+POST http://localhost:5001/api/pdf/merge?outputFormat=A3
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test1.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test1.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 19. Test z różnymi formatami stron - PdfSharp Service
+POST http://localhost:5002/api/pdf/merge?outputFormat=A5
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test1.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test1.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 20. Test z różnymi formatami stron - Python Service
+POST http://localhost:5003/api/pdf/merge?outputFormat=LETTER
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="test1.pdf"
+Content-Type: application/pdf
+
+< ./test-files/test1.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW-- 

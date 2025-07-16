@@ -1,0 +1,30 @@
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPDFService", "IronPDFService\IronPDFService.csproj", "{48F4B365-0364-FADE-2C79-A02E8F1D104B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PdfSharpService", "PdfSharpService\PdfSharpService.csproj", "{257BE39F-45EA-4C17-BEA7-25FB1BCE4FEF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{48F4B365-0364-FADE-2C79-A02E8F1D104B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48F4B365-0364-FADE-2C79-A02E8F1D104B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48F4B365-0364-FADE-2C79-A02E8F1D104B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48F4B365-0364-FADE-2C79-A02E8F1D104B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{257BE39F-45EA-4C17-BEA7-25FB1BCE4FEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{257BE39F-45EA-4C17-BEA7-25FB1BCE4FEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{257BE39F-45EA-4C17-BEA7-25FB1BCE4FEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{257BE39F-45EA-4C17-BEA7-25FB1BCE4FEF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {30AAA2B4-2E99-468A-B07B-71ECA1CDB125}
+	EndGlobalSection
+EndGlobal

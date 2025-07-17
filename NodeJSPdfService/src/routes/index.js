@@ -1,8 +1,8 @@
-const express = require('express');
-const pdfRoutes = require('./pdf.routes');
-const barcodeRoutes = require('./barcode.routes');
+import { Router } from 'express';
+import barcodeRoutes from './barcode.routes.js';
+import pdfRoutes from './pdf.routes.js';
 
-const router = express.Router();
+const router = Router();
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -16,6 +16,6 @@ router.get('/health', (req, res) => {
 
 // Mount route modules
 router.use('/pdf', pdfRoutes);
-router.use('/pdf', barcodeRoutes);
+router.use('/barcode', barcodeRoutes);  // Naprawiam konflikt - oddzielna ścieżka
 
-module.exports = router;
+export default router;

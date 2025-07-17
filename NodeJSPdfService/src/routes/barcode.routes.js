@@ -73,5 +73,4 @@ router.post('/read-barcode',
   barcodeController.readBarcode.bind(barcodeController)
 );
 
-export { router as barcodeRoutes };
 export default router;

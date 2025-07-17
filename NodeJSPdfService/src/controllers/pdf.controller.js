@@ -37,15 +37,19 @@ export class PdfController {
         );
       }
 
+      // Sprawdzaj Accept header - jeśli aplikacja/pdf, zwróć plik
+      const acceptHeader = req.headers.accept || '';
+      const wantsPdf = acceptHeader.includes('application/pdf') || req.body.streaming === 'true';
+
       const options = {
         quality: req.body.quality || 'high',
         compression: req.body.compression !== 'false',
-        streaming: req.useStreaming || req.body.streaming === 'true'
+        streaming: wantsPdf || req.useStreaming || req.body.streaming === 'true'
       };
 
       const result = await this.pdfService.mergePdfs(req.files, options);
 
-      if (options.streaming) {
+      if (wantsPdf || options.streaming) {
         return res.streamBuffer(result.buffer, {
           filename: 'merged.pdf'
         });
@@ -114,18 +118,22 @@ export class PdfController {
         );
       }
 
+      // Sprawdzaj Accept header - jeśli aplikacja/pdf, zwróć plik
+      const acceptHeader = req.headers.accept || '';
+      const wantsPdf = acceptHeader.includes('application/pdf') || req.body.streaming === 'true';
+
       const options = {
         format: req.body.format || 'A4',
         quality: req.body.quality || 'high',
         compression: req.body.compression !== 'false',
         margin: parseInt(req.body.margin) || 0,
-        streaming: req.useStreaming || req.body.streaming === 'true',
+        streaming: wantsPdf || req.useStreaming || req.body.streaming === 'true',
         parallel: req.body.parallel === 'true'
       };
 
       const result = await this.pdfService.imagesToPdf(req.files, options);
 
-      if (options.streaming) {
+      if (wantsPdf || options.streaming) {
         return res.streamBuffer(result.buffer, {
           filename: 'images.pdf'
         });
@@ -155,16 +163,20 @@ export class PdfController {
         );
       }
 
+      // Sprawdzaj Accept header - jeśli aplikacja/pdf, zwróć plik
+      const acceptHeader = req.headers.accept || '';
+      const wantsPdf = acceptHeader.includes('application/pdf') || req.body.streaming === 'true';
+
       const options = {
         preserveFormatting: req.body.preserveFormatting !== 'false',
         includeImages: req.body.includeImages !== 'false',
         quality: req.body.quality || 'high',
-        streaming: req.useStreaming || req.body.streaming === 'true'
+        streaming: wantsPdf || req.useStreaming || req.body.streaming === 'true'
       };
 
       const result = await this.pdfService.docToPdf(req.file, options);
 
-      if (options.streaming) {
+      if (wantsPdf || options.streaming) {
         return res.streamBuffer(result.buffer, {
           filename: `${req.file.originalname.replace(/\.[^/.]+$/, '')}.pdf`
         });
@@ -230,17 +242,21 @@ export class PdfController {
         );
       }
 
+      // Sprawdzaj Accept header - jeśli aplikacja/pdf, zwróć plik
+      const acceptHeader = req.headers.accept || '';
+      const wantsPdf = acceptHeader.includes('application/pdf') || req.body.streaming === 'true';
+
       const options = {
         text,
         size: parseInt(size),
         position,
         page: parseInt(req.body.page) || 1,
-        streaming: req.useStreaming || req.body.streaming === 'true'
+        streaming: wantsPdf || req.useStreaming || req.body.streaming === 'true'
       };
 
       const result = await this.pdfService.addQrCode(req.file, options);
 
-      if (options.streaming) {
+      if (wantsPdf || options.streaming) {
         return res.streamBuffer(result.buffer, {
           filename: 'qr-code-added.pdf'
         });

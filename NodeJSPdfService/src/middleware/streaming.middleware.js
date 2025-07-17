@@ -30,9 +30,14 @@ export class StreamingMiddleware {
   }
 
   fileFilter(req, file, cb) {
+    console.log(`🔍 FileFilter debug - received MIME type: ${file.mimetype}, filename: ${file.originalname}`);
+    console.log('📋 Allowed MIME types:', config.upload.allowedMimeTypes);
+
     if (config.upload.allowedMimeTypes.includes(file.mimetype)) {
+      console.log(`✅ MIME type ${file.mimetype} is allowed`);
       cb(null, true);
     } else {
+      console.log(`❌ MIME type ${file.mimetype} is NOT allowed`);
       cb(new Error(ERROR_MESSAGES.INVALID_FILE_TYPE), false);
     }
   }
@@ -214,6 +219,15 @@ export class StreamingMiddleware {
       };
 
       res.streamBuffer = (buffer, options = {}) => {
+        if (!buffer) {
+          console.error('StreamBuffer called with undefined buffer');
+          return res.status(500).json({
+            success: false,
+            error: 'Buffer is undefined',
+            message: 'Failed to generate file buffer'
+          });
+        }
+
         const {
           filename = 'download.pdf',
           mimetype = MIME_TYPES.PDF

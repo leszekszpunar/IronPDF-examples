@@ -3,6 +3,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerDefinition from '../swagger-definition.js';
 import { config } from './config/app.config.js';
 import SecurityMiddleware from './middleware/security.middleware.js';
+import streamingMiddleware from './middleware/streaming.middleware.js';
 import barcodeRoutes from './routes/barcode.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import pdfRoutes from './routes/pdf.routes.js';
@@ -25,15 +26,15 @@ class PdfServiceApplication {
   async initialize() {
     try {
       this.setupMiddleware();
+      this.setupSwagger();      // Swagger PRZED routes
       this.setupRoutes();
-      this.setupSwagger();
       this.setupErrorHandling();
       this.setupGracefulShutdown();
 
       console.log('✅ PDF Service application initialized successfully');
     } catch (error) {
       console.error('❌ Failed to initialize application:', error);
-      process.exit(1);
+      throw error;
     }
   }
 
@@ -47,6 +48,9 @@ class PdfServiceApplication {
     this.app.use(SecurityMiddleware.compression());
     this.app.use(SecurityMiddleware.rateLimit());
     this.app.use(SecurityMiddleware.speedLimit());
+
+    // Streaming middleware (dodaje res.streamBuffer)
+    this.app.use(streamingMiddleware.streamingDownload());
 
     // Body parsing middleware
     this.app.use(express.json({ limit: config.upload.maxFileSize }));

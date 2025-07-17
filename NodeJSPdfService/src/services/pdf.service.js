@@ -3,6 +3,7 @@ import mammoth from 'mammoth';
 import { join } from 'path';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 // PDF parsing temporarily disabled due to module issues
+import { SignPdf } from '@signpdf/signpdf';
 import QRCode from 'qrcode';
 import sharp from 'sharp';
 import { config } from '../config/app.config.js';
@@ -64,6 +65,16 @@ export class PdfService {
     const { quality = 'high', compression = true, streaming = false } = options;
 
     try {
+      console.log('Debug - files received:', files.length);
+      console.log('Debug - first file structure:', JSON.stringify(files[0], null, 2));
+      console.log('Debug - files map:', files.map(f => ({
+        fieldname: f.fieldname,
+        originalname: f.originalname,
+        hasBuffer: !!f.buffer,
+        bufferLength: f.buffer?.length,
+        hasPath: !!f.path
+      })));
+
       const mergedPdf = await PDFDocument.create();
 
       // Process files in parallel for better performance
@@ -282,13 +293,29 @@ export class PdfService {
     try {
       const docBytes = file.buffer || await fs.readFile(file.path);
 
-      // Extract content using mammoth
-      const result = await mammoth.convertToHtml(docBytes, {
-        includeDefaultStyleMap: preserveFormatting,
-        includeEmbeddedStyleMap: preserveFormatting
-      });
+      // Check if it's a DOCX (ZIP-based) or DOC (binary format)
+      const isDocx = file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                     file.originalname.toLowerCase().endsWith('.docx');
 
-      const htmlContent = result.value;
+      let htmlContent;
+
+      if (isDocx) {
+        // Extract content using mammoth for DOCX
+        const result = await mammoth.convertToHtml(docBytes, {
+          includeDefaultStyleMap: preserveFormatting,
+          includeEmbeddedStyleMap: preserveFormatting
+        });
+        htmlContent = result.value;
+      } else {
+        // For DOC files, provide a basic conversion fallback
+        console.log('Processing legacy DOC file - using fallback conversion');
+        htmlContent = `<p>Document conversion from DOC format</p>
+                      <p>Original filename: ${file.originalname}</p>
+                      <p>File size: ${docBytes.length} bytes</p>
+                      <p>Note: Full DOC parsing requires additional libraries. This is a placeholder conversion.</p>
+                      <p>For better results, please convert your document to DOCX format.</p>`;
+      }
+
       const pdf = await PDFDocument.create();
       const page = pdf.addPage();
       const { width, height } = page.getSize();
@@ -501,6 +528,115 @@ export class PdfService {
   }
 
   /**
+   * Add barcode to PDF
+   * @param {Object} file - PDF file to modify
+   * @param {Object} options - Barcode options
+   * @returns {Object} Result with modified PDF
+   */
+  async addBarcode(file, options = {}) {
+    const {
+      text,
+      format = 'CODE128',
+      width = 200,
+      height = 50,
+      position = 'bottom-right',
+      page = 1,
+      streaming = false
+    } = options;
+
+    try {
+      const pdfBytes = file.buffer || await fs.readFile(file.path);
+      const pdf = await PDFDocument.load(pdfBytes);
+
+      // Import barcode service to generate barcode
+      const BarcodeService = await import('./barcode.service.js');
+      const barcodeService = new BarcodeService.BarcodeService();
+
+      // Generate barcode as PNG buffer
+      const barcodeResult = await barcodeService.generateBarcode(text, {
+        format,
+        width,
+        height
+      });
+
+      // Check if we got a buffer or need to read from path
+      let barcodeBuffer;
+      if (barcodeResult.buffer) {
+        barcodeBuffer = barcodeResult.buffer;
+      } else if (barcodeResult.path) {
+        barcodeBuffer = await fs.readFile(barcodeResult.path);
+      } else {
+        throw new Error('Failed to get barcode buffer from service');
+      }
+
+      // Embed barcode image in PDF
+      const barcodeImage = await pdf.embedPng(barcodeBuffer);
+
+      const pageIndex = Math.min(page - 1, pdf.getPageCount() - 1);
+      const pdfPage = pdf.getPage(pageIndex);
+      const { width: pageWidth, height: pageHeight } = pdfPage.getSize();
+
+      // Calculate position
+      let x, y;
+      switch (position) {
+      case 'top-left':
+        x = 20;
+        y = pageHeight - height - 20;
+        break;
+      case 'top-right':
+        x = pageWidth - width - 20;
+        y = pageHeight - height - 20;
+        break;
+      case 'bottom-left':
+        x = 20;
+        y = 20;
+        break;
+      case 'bottom-right':
+      default:
+        x = pageWidth - width - 20;
+        y = 20;
+        break;
+      case 'center':
+        x = (pageWidth - width) / 2;
+        y = (pageHeight - height) / 2;
+        break;
+      }
+
+      pdfPage.drawImage(barcodeImage, {
+        x,
+        y,
+        width,
+        height
+      });
+
+      const modifiedPdfBytes = await pdf.save();
+
+      if (streaming) {
+        return { buffer: Buffer.from(modifiedPdfBytes) };
+      }
+
+      const filename = `barcode-${Date.now()}.pdf`;
+      const outputPath = join(this.tempDir, filename);
+      await fs.writeFile(outputPath, modifiedPdfBytes);
+
+      return {
+        filename,
+        path: outputPath,
+        size: modifiedPdfBytes.length,
+        barcodeData: {
+          text,
+          format,
+          position,
+          page
+        }
+      };
+    } catch (error) {
+      console.error('Error adding barcode:', error);
+      throw new Error(`Failed to add barcode: ${error.message}`);
+    }
+  }
+
+  /**
    * Batch process multiple files
    */
   async batchProcess(files, operation, options = {}) {
@@ -598,6 +734,99 @@ export class PdfService {
     // This is a simplified implementation
     // In production, you'd use a proper ZIP library like JSZip
     return Buffer.concat(pages.map(p => p.buffer));
+  }
+
+  /**
+   * Sign PDF with digital signature using P12/PFX certificate
+   * @param {Object} pdfFile - PDF file object with buffer
+   * @param {Object} certificateFile - P12/PFX certificate file object with buffer
+   * @param {string} password - Certificate password
+   * @param {Object} options - Signing options
+   * @returns {Object} Result with signed PDF buffer or file path
+   */
+  async signPdf(pdfFile, certificateFile, password, options = {}) {
+    const {
+      reason = 'Document signing',
+      location = 'Digital signature',
+      contactInfo = '',
+      streaming = false
+    } = options;
+
+    try {
+      console.log('🔐 Starting PDF signing process...');
+
+      // Initialize PDF signer
+      const signer = new SignPdf();
+
+      // Get PDF buffer
+      const pdfBuffer = pdfFile.buffer || await fs.readFile(pdfFile.path);
+
+      // Get certificate buffer
+      const certificateBuffer = certificateFile.buffer || await fs.readFile(certificateFile.path);
+
+      console.log(`📄 PDF size: ${(pdfBuffer.length / 1024).toFixed(1)}KB`);
+      console.log(`🔑 Certificate size: ${(certificateBuffer.length / 1024).toFixed(1)}KB`);
+
+      // Configure signing options
+      const signOptions = {
+        reason,
+        location,
+        contactInfo,
+        // Set signing time
+        signingTime: new Date(),
+        // Use SHA256 for better security
+        hashAlgorithm: 'sha256'
+      };
+
+      console.log('🖊️ Signing PDF with options:', {
+        reason: signOptions.reason,
+        location: signOptions.location,
+        hashAlgorithm: signOptions.hashAlgorithm
+      });
+
+      // Sign the PDF
+      const signedPdfBuffer = await signer.sign(pdfBuffer, certificateBuffer, {
+        passphrase: password,
+        ...signOptions
+      });
+
+      console.log(`✅ PDF signed successfully, output size: ${(signedPdfBuffer.length / 1024).toFixed(1)}KB`);
+
+      if (streaming) {
+        return { buffer: signedPdfBuffer };
+      }
+
+      // Save to file
+      const filename = `signed-${Date.now()}.pdf`;
+      const outputPath = join(this.tempDir, filename);
+      await fs.writeFile(outputPath, signedPdfBuffer);
+
+      return {
+        filename,
+        path: outputPath,
+        size: signedPdfBuffer.length,
+        signatureInfo: {
+          reason,
+          location,
+          contactInfo,
+          timestamp: new Date().toISOString(),
+          algorithm: 'SHA256'
+        }
+      };
+    } catch (error) {
+      console.error('❌ Error signing PDF:', error);
+
+      // Provide more specific error messages
+      if (error.message.includes('passphrase') || error.message.includes('password')) {
+        throw new Error('Invalid certificate password');
+      } else if (error.message.includes('certificate') || error.message.includes('p12') || error.message.includes('pfx')) {
+        throw new Error('Invalid or corrupted certificate file');
+      } else if (error.message.includes('PDF')) {
+        throw new Error('Invalid or corrupted PDF file');
+      } else {
+        throw new Error(`Failed to sign PDF: ${error.message}`);
+      }
+    }
   }
 }
 

@@ -1,4 +1,5 @@
 import compression from 'compression';
+import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import slowDown from 'express-slow-down';
 import helmet from 'helmet';
@@ -35,12 +36,15 @@ export class SecurityMiddleware {
    */
   static speedLimit() {
     return slowDown({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      delayAfter: 50, // allow 50 requests per windowMs without delay
-      delayMs: 500, // add 500ms delay per request after delayAfter
-      maxDelayMs: 20000, // maximum delay of 20 seconds
-      skipSuccessfulRequests: true,
-      skipFailedRequests: false
+      windowMs: config.security.speedLimit.windowMs,
+      delayAfter: config.security.speedLimit.delayAfter,
+      delayMs: config.security.speedLimit.delayMs,
+      maxDelayMs: config.security.speedLimit.maxDelayMs,
+      skipSuccessfulRequests: config.security.speedLimit.skipSuccessfulRequests,
+      skipFailedRequests: config.security.speedLimit.skipFailedRequests,
+      validate: {
+        delayMs: false // disable warning message
+      }
     });
   }
 
@@ -120,7 +124,7 @@ export class SecurityMiddleware {
       ]
     };
 
-    return corsOptions;
+    return cors(corsOptions);
   }
 
   /**

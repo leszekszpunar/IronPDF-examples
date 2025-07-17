@@ -1,4 +1,5 @@
 import path from 'path';
+import { PDFDocument } from 'pdf-lib';
 import { fileURLToPath } from 'url';
 // import qpdfInfo from 'node-qpdf2'; // Temporarily disabled - will implement alternative
 

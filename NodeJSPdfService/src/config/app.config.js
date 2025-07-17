@@ -14,12 +14,27 @@ export const config = {
 
   // Performance & Security
   security: {
+    // Rate limiting configuration
     rateLimit: {
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 100, // limit each IP to 100 requests per windowMs
+      windowMs: (process.env.NODE_ENV === 'development') ? 1 * 60 * 1000 : 15 * 60 * 1000, // Dev: 1 min, Prod: 15 min
+      max: (process.env.NODE_ENV === 'development') ? 1000 : 100, // Dev: 1000 requests, Prod: 100 requests
       standardHeaders: true,
-      legacyHeaders: false
+      legacyHeaders: false,
+      skipSuccessfulRequests: false,
+      skipFailedRequests: false
     },
+
+    // Speed limiting configuration
+    speedLimit: {
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      delayAfter: (process.env.NODE_ENV === 'development') ? 1000 : 50, // Dev: 1000 requests (prawie wyłączone), Prod: 50 requests
+      delayMs: (process.env.NODE_ENV === 'development') ? () => 50 : () => 500, // Dev: 50ms, Prod: 500ms delay
+      maxDelayMs: (process.env.NODE_ENV === 'development') ? 1000 : 20000, // Dev: max 1s, Prod: max 20s delay
+      skipSuccessfulRequests: true,
+      skipFailedRequests: false
+    },
+
+    // Helmet configuration
     helmet: {
       contentSecurityPolicy: {
         directives: {
@@ -35,7 +50,8 @@ export const config = {
           formAction: ['\'self\''],
           frameAncestors: ['\'none\''],
           baseUri: ['\'self\''],
-          upgradeInsecureRequests: []
+          upgradeInsecureRequests: [],
+          scriptSrcAttr: ['\'none\'']
         }
       },
       crossOriginEmbedderPolicy: false,
@@ -63,15 +79,34 @@ export const config = {
     maxFileSize: 50 * 1024 * 1024, // 50MB
     maxFiles: 10,
     allowedMimeTypes: [
+      // PDF files
       'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+
+      // Word documents
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+
+      // Additional DOC MIME types (fallback)
+      'application/x-msword',
+      'application/doc',
+      'application/ms-doc',
+      'application/msword-document',
+
+      // Text files
       'text/plain',
       'text/html',
+
+      // Images
       'image/jpeg',
+      'image/jpg',
       'image/png',
       'image/gif',
-      'image/webp'
+      'image/webp',
+      'image/bmp',
+      'image/tiff',
+
+      // Additional formats
+      'application/octet-stream' // Fallback for binary files
     ],
     tempDir: join(__dirname, '../../temp'),
     uploadsDir: join(__dirname, '../../uploads')
@@ -126,7 +161,6 @@ export const config = {
 
   // Health Check Configuration
   health: {
-    timeout: 5000,
     checks: [
       'memory',
       'disk',

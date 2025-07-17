@@ -199,5 +199,4 @@ async function getPerformanceMetrics() {
   };
 }
 
-export { router as healthRoutes };
 export default router;

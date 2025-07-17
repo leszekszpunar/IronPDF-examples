@@ -119,7 +119,7 @@ const telemetryMiddleware = (operationType = 'security') => (req, res, next) => 
  *         description: Verification failed
  */
 router.post('/verify-signatures',
-  streamingMiddleware.uploadSingle,
+  streamingMiddleware.single('file'),
   telemetryMiddleware('signature_verification'),
   [validatePdfFile, validateBase64Pdf],
   securityController.verifySignatures.bind(securityController)
@@ -181,7 +181,7 @@ router.post('/verify-signatures',
  *                       type: array
  */
 router.post('/analyze',
-  streamingMiddleware.uploadSingle,
+  streamingMiddleware.single('file'),
   telemetryMiddleware('security_analysis'),
   [validatePdfFile, validateBase64Pdf, validateSecurityOptions],
   securityController.analyzeSecurityFeatures.bind(securityController)
@@ -244,7 +244,7 @@ router.post('/analyze',
  *                       enum: [none, user, owner]
  */
 router.post('/test-password',
-  streamingMiddleware.uploadSingle,
+  streamingMiddleware.single('file'),
   telemetryMiddleware('password_test'),
   [validatePdfFile, validateBase64Pdf, validatePassword],
   securityController.testPassword.bind(securityController)
@@ -316,7 +316,7 @@ router.post('/test-password',
  *                       type: array
  */
 router.post('/report',
-  streamingMiddleware.uploadSingle,
+  streamingMiddleware.single('file'),
   telemetryMiddleware('security_report'),
   [validatePdfFile, validateBase64Pdf, validateCompliance],
   securityController.generateSecurityReport.bind(securityController)
@@ -372,7 +372,7 @@ router.post('/report',
  *                           type: number
  */
 router.post('/batch-verify',
-  streamingMiddleware.uploadMultiple,
+  streamingMiddleware.array('files'),
   telemetryMiddleware('batch_verification'),
   securityController.batchVerifyDocuments.bind(securityController)
 );
@@ -451,7 +451,7 @@ router.get('/trusted-ca',
 );
 
 router.post('/trusted-ca',
-  streamingMiddleware.uploadSingle,
+  streamingMiddleware.single('file'),
   telemetryMiddleware('ca_management'),
   [validateCertificate],
   securityController.addTrustedCA.bind(securityController)
@@ -554,7 +554,7 @@ router.delete('/trusted-ca/:fingerprint',
  *         description: Server error
  */
 router.post('/certificates',
-  streamingMiddleware.uploadSingle,
+  streamingMiddleware.single('file'),
   telemetryMiddleware('certificate_extraction'),
   [validatePdfFile, validateBase64Pdf],
   securityController.getCertificateDetails.bind(securityController)

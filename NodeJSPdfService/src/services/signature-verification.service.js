@@ -1,6 +1,4 @@
 import forge from 'node-forge';
-import pdfSignatureReader from 'pdf-signature-reader';
-const { readPdfSignatures } = pdfSignatureReader;
 
 /**
  * Advanced PDF Digital Signature Verification Service
@@ -10,7 +8,23 @@ class SignatureVerificationService {
   constructor() {
     this.trustedCAs = new Set();
     this.revokedCertificates = new Set();
+    this.readPdfSignatures = null;
     this.initializeTrustedCAs();
+    this.initializePdfReader();
+  }
+
+  /**
+   * Initialize PDF signature reader
+   */
+  async initializePdfReader() {
+    try {
+      const pdfSignatureReader = await import('pdf-signature-reader');
+      this.readPdfSignatures = pdfSignatureReader.readPdfSignatures || pdfSignatureReader.default?.readPdfSignatures;
+      console.log('✅ pdf-signature-reader loaded successfully');
+    } catch (error) {
+      console.warn('⚠️ pdf-signature-reader not available, using fallback implementation');
+      this.readPdfSignatures = null;
+    }
   }
 
   /**
@@ -42,8 +56,20 @@ class SignatureVerificationService {
     try {
       console.log('🔍 Starting signature verification...');
 
-      // Read signatures from PDF
-      const signaturesData = await readPdfSignatures(pdfBuffer);
+      // Ensure PDF reader is initialized
+      if (this.readPdfSignatures === null && !this._readerInitialized) {
+        await this.initializePdfReader();
+        this._readerInitialized = true;
+      }
+
+      // Fallback if pdf-signature-reader is not available
+      let signaturesData;
+      if (this.readPdfSignatures) {
+        signaturesData = await this.readPdfSignatures(pdfBuffer);
+      } else {
+        // Basic PDF signature detection fallback
+        signaturesData = this.detectSignaturesFallback(pdfBuffer);
+      }
 
       if (!signaturesData || signaturesData.length === 0) {
         return {
@@ -58,7 +84,10 @@ class SignatureVerificationService {
           },
           signatures: [],
           certificates: { details: [], chainAnalysis: {}, trustLevel: 'none' },
-          securityAnalysis: { recommendations: ['Add digital signature for document authentication'] }
+          securityAnalysis: { 
+            recommendations: ['Add digital signature for document authentication'],
+            note: this.readPdfSignatures ? '' : 'Using fallback signature detection (limited functionality)'
+          }
         };
       }
 
@@ -466,6 +495,85 @@ class SignatureVerificationService {
    */
   getTrustedCAs() {
     return Array.from(this.trustedCAs);
+  }
+
+  /**
+   * Add certificate to revocation list
+   * @param {string} certificatePem - Certificate in PEM format
+   * @returns {Object} Result of adding to revocation list
+   */
+  addRevokedCertificate(certificatePem) {
+    try {
+      const certificate = forge.pki.certificateFromPem(certificatePem);
+      const fingerprint = this.calculateFingerprint(certificate);
+
+      this.revokedCertificates.add(fingerprint);
+
+      return {
+        success: true,
+        fingerprint,
+        message: 'Certificate added to revocation list'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Alias for verifySignatures to maintain compatibility with controller
+   * @param {Buffer} pdfBuffer - PDF content as buffer
+   * @param {Object} options - Verification options
+   * @returns {Object} Verification results
+   */
+  async verifyPdfSignatures(pdfBuffer, options = {}) {
+    return this.verifySignatures(pdfBuffer, options);
+  }
+
+  /**
+   * Fallback signature detection when pdf-signature-reader is not available
+   * @param {Buffer} pdfBuffer - PDF buffer
+   * @returns {Array} Detected signatures (simplified)
+   */
+  detectSignaturesFallback(pdfBuffer) {
+    try {
+      const pdfString = pdfBuffer.toString('latin1');
+      const signatures = [];
+
+      // Look for signature dictionary patterns in PDF
+      const sigPatterns = [
+        /\/Type\s*\/Sig/g,
+        /\/SubFilter\s*\/(?:adbe\.pkcs7\.detached|adbe\.pkcs7\.sha1|ETSI\.CAdES\.detached)/g,
+        /\/Contents\s*<[0-9a-fA-F]+>/g
+      ];
+
+      let hasSignatures = false;
+      for (const pattern of sigPatterns) {
+        if (pattern.test(pdfString)) {
+          hasSignatures = true;
+          break;
+        }
+      }
+
+      if (hasSignatures) {
+        // Create a mock signature object for testing purposes
+        signatures.push({
+          type: 'digital_signature',
+          subFilter: 'unknown',
+          contents: 'signature_detected_via_fallback',
+          reason: 'Signature detected using fallback method',
+          location: 'Unknown',
+          contactInfo: 'Unknown'
+        });
+      }
+
+      return signatures;
+    } catch (error) {
+      console.error('Fallback signature detection failed:', error);
+      return [];
+    }
   }
 }
 

@@ -496,3 +496,10 @@ package-lock.json
 # Go binaries
 main
 *.exe
+
+# Temporary directories and files
+temp/
+*/temp/
+**/temp/
+*.tmp
+*.log

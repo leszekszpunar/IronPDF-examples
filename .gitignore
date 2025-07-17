@@ -482,3 +482,17 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Additional Node.js ignores
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Additional .NET ignores  
+*.dll
+*.pdb
+*.exe
+
+# Go binaries
+main
+*.exe

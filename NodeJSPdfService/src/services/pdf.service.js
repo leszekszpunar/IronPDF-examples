@@ -1,11 +1,11 @@
 import { promises as fs } from 'fs';
+import Jimp from 'jimp';
 import mammoth from 'mammoth';
 import { join } from 'path';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 // PDF parsing temporarily disabled due to module issues
 import { SignPdf } from '@signpdf/signpdf';
 import QRCode from 'qrcode';
-import sharp from 'sharp';
 import { config } from '../config/app.config.js';
 import { MIME_TYPES } from '../constants/index.js';
 
@@ -195,22 +195,23 @@ export class PdfService {
       // Process images in parallel if requested
       const processImage = async (file) => {
         const imageBytes = file.buffer || await fs.readFile(file.path);
-        let processedImage;
 
-        // Optimize image based on quality setting
+        // Load image with Jimp and optimize based on quality setting
+        const image = await Jimp.read(imageBytes);
+
+        let qualityValue;
         if (quality === 'high') {
-          processedImage = await sharp(imageBytes)
-            .jpeg({ quality: 95 })
-            .toBuffer();
+          qualityValue = 95;
         } else if (quality === 'medium') {
-          processedImage = await sharp(imageBytes)
-            .jpeg({ quality: 80 })
-            .toBuffer();
+          qualityValue = 80;
         } else {
-          processedImage = await sharp(imageBytes)
-            .jpeg({ quality: 60 })
-            .toBuffer();
+          qualityValue = 60;
         }
+
+        // Convert to JPEG with specified quality
+        const processedImage = await image
+          .quality(qualityValue)
+          .getBufferAsync(Jimp.MIME_JPEG);
 
         return processedImage;
       };
@@ -633,6 +634,110 @@ export class PdfService {
     } catch (error) {
       console.error('Error adding barcode:', error);
       throw new Error(`Failed to add barcode: ${error.message}`);
+    }
+  }
+
+  /**
+   * Add watermark to PDF
+   * @param {Object} file - PDF file to modify
+   * @param {Object} options - Watermark options
+   * @returns {Object} Result with modified PDF
+   */
+  async addWatermark(file, options = {}) {
+    const {
+      text = 'WATERMARK',
+      fontSize = 48,
+      opacity = 0.3,
+      rotation = -45,
+      position = 'center',
+      color = '#FF0000',
+      streaming = false
+    } = options;
+
+    try {
+      const pdfBytes = file.buffer || await fs.readFile(file.path);
+      const pdf = await PDFDocument.load(pdfBytes);
+
+      // Create watermark text
+      const font = await pdf.embedFont(StandardFonts.HelveticaBold);
+
+      // Process all pages
+      const pages = pdf.getPages();
+
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const { width, height } = page.getSize();
+
+        // Calculate position
+        let x, y;
+        switch (position) {
+        case 'top-left':
+          x = 50;
+          y = height - 100;
+          break;
+        case 'top-right':
+          x = width - 200;
+          y = height - 100;
+          break;
+        case 'bottom-left':
+          x = 50;
+          y = 100;
+          break;
+        case 'bottom-right':
+          x = width - 200;
+          y = 100;
+          break;
+        case 'center':
+        default:
+          x = width / 2;
+          y = height / 2;
+          break;
+        }
+
+        // Convert hex color to RGB
+        const hex = color.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16) / 255;
+        const g = parseInt(hex.substr(2, 2), 16) / 255;
+        const b = parseInt(hex.substr(4, 2), 16) / 255;
+
+        // Add watermark text
+        page.drawText(text, {
+          x,
+          y,
+          size: fontSize,
+          font,
+          color: rgb(r, g, b),
+          opacity,
+          rotate: { angle: rotation, type: 'degrees' }
+        });
+      }
+
+      const modifiedPdfBytes = await pdf.save();
+
+      if (streaming) {
+        return { buffer: Buffer.from(modifiedPdfBytes) };
+      }
+
+      const filename = `watermark-${Date.now()}.pdf`;
+      const outputPath = join(this.tempDir, filename);
+      await fs.writeFile(outputPath, modifiedPdfBytes);
+
+      return {
+        filename,
+        path: outputPath,
+        size: modifiedPdfBytes.length,
+        watermarkData: {
+          text,
+          fontSize,
+          opacity,
+          rotation,
+          position,
+          color
+        }
+      };
+    } catch (error) {
+      console.error('Error adding watermark:', error);
+      throw new Error(`Failed to add watermark: ${error.message}`);
     }
   }
 

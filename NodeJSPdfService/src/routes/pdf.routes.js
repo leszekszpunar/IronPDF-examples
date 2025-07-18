@@ -865,4 +865,81 @@ router.post('/sign',
   }
 );
 
+/**
+ * @swagger
+ * /api/pdf/add-watermark:
+ *   post:
+ *     tags: [PDF Operations]
+ *     summary: Dodaje watermark do pliku PDF
+ *     description: |
+ *       Dodaje tekstowy watermark do pliku PDF z opcjami:
+ *       - Tekst watermark
+ *       - Rozmiar czcionki
+ *       - Przezroczystość
+ *       - Rotacja
+ *       - Pozycja (center, top-left, top-right, bottom-left, bottom-right)
+ *       - Kolor
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: PDF file to add watermark to
+ *               text:
+ *                 type: string
+ *                 description: Watermark text
+ *                 default: WATERMARK
+ *               fontSize:
+ *                 type: integer
+ *                 description: Font size
+ *                 default: 48
+ *               opacity:
+ *                 type: number
+ *                 description: Opacity (0.0-1.0)
+ *                 default: 0.3
+ *               rotation:
+ *                 type: integer
+ *                 description: Rotation angle in degrees
+ *                 default: -45
+ *               position:
+ *                 type: string
+ *                 enum: [center, top-left, top-right, bottom-left, bottom-right]
+ *                 description: Watermark position
+ *                 default: center
+ *               color:
+ *                 type: string
+ *                 description: Color in hex format
+ *                 default: "#FF0000"
+ *     responses:
+ *       200:
+ *         description: Watermark added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     filename:
+ *                       type: string
+ *                     size:
+ *                       type: integer
+ *                     watermarkData:
+ *                       type: object
+ */
+router.post('/add-watermark',
+  streamingMiddleware.single('file'),
+  pdfController.addWatermark.bind(pdfController)
+);
+
 export default router;

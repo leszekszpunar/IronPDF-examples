@@ -275,6 +275,52 @@ export class PdfController {
   }
 
   /**
+   * Add watermark to PDF
+   */
+  async addWatermark(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(
+          ApiTypes.error(ERROR_MESSAGES.MISSING_FILE)
+        );
+      }
+
+      // Sprawdzaj Accept header - jeśli aplikacja/pdf, zwróć plik
+      const acceptHeader = req.headers.accept || '';
+      const wantsPdf = acceptHeader.includes('application/pdf') || req.body.streaming === 'true';
+
+      const options = {
+        text: req.body.text || 'WATERMARK',
+        fontSize: parseInt(req.body.fontSize) || 48,
+        opacity: parseFloat(req.body.opacity) || 0.3,
+        rotation: parseInt(req.body.rotation) || -45,
+        position: req.body.position || 'center',
+        color: req.body.color || '#FF0000',
+        streaming: wantsPdf || req.useStreaming || req.body.streaming === 'true'
+      };
+
+      const result = await this.pdfService.addWatermark(req.file, options);
+
+      if (wantsPdf || options.streaming) {
+        return res.streamBuffer(result.buffer, {
+          filename: `watermark-${req.file.originalname}`
+        });
+      }
+
+      res.json(ApiTypes.success('Watermark added to PDF successfully', {
+        filename: result.filename,
+        size: result.size,
+        watermarkData: result.watermarkData
+      }));
+    } catch (error) {
+      console.error('Error adding watermark to PDF:', error);
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+        ApiTypes.error(ERROR_MESSAGES.PROCESSING_ERROR, error.message)
+      );
+    }
+  }
+
+  /**
    * Batch processing endpoint
    */
   async batchProcess(req, res) {
